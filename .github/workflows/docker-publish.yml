@@ -3,10 +3,10 @@ name: Docker Build and Push to GHCR
 on:
   push:
     branches:
-      - master  # Trigger the workflow on push to the main branch
+      - interupts # Trigger the workflow on push to the main branch
   pull_request:
     branches:
-      - master  # Trigger the workflow on pull requests to the main branch
+      - interupts  # Trigger the workflow on pull requests to the main branch
   workflow_dispatch:
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/lilkidsuave/cosmos-cert-extractor:latest
+          tags: ghcr.io/lilkidsuave/cosmos-cert-extractor:interupts
 
       - name: Log out from GitHub Container Registry
         run: docker logout ghcr.io
