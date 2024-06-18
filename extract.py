@@ -85,17 +85,17 @@ def signal_handler(sig, frame):
 def main():
     run_once = False
     next_check_time = time.time()
+    check_interval = get_check_interval()
     while True:
-        check_interval = get_check_interval()
         current_time = time.time()
         cert_data, key_data = load_certificates()
         if not cert_data or not key_data:
             print("Couldn't read the certificate or key file.")
-        if current_time >= next_check_time or run_once == False or is_cert_expired(cert_data) and check_interval != 0:
+        if current_time >= next_check_time or run_once == False or interrupted or is_cert_expired(cert_data) and get_check_interval() != 0:
             renew_certificates()
             next_check_time = current_time + check_interval
             print("Checking again in " + str(check_interval) + " seconds.")
-        if check_interval == 0 and is_cert_expired(cert_data):
+        if get_check_interval() == 0 and is_cert_expired(cert_data) or interrupted:
             renew_certificates()
         run_once = True
 if __name__ == "__main__":
