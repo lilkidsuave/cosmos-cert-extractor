@@ -6,7 +6,6 @@ import signal
 import time
 from datetime import datetime
 from OpenSSL import crypto
-
 CONFIG_PATH = "/input/cosmos.config.json"
 CERT_PATH = "/output/certs/cert.pem"
 KEY_PATH = "/output/certs/key.pem"
@@ -84,6 +83,7 @@ def signal_handler(sig, frame):
 
 def main():
     next_check_time = time.time()
+    check_interval = get_check_interval()
     while True:
         current_time = time.time()
         cert_data, key_data = load_certificates()
@@ -91,11 +91,11 @@ def main():
             print("Couldn't read the certificate or key file.")
         if current_time >= next_check_time and next_check_time != current_time:
             renew_certificates()          
-            next_check_time = current_time + get_check_interval()
-            print("Checking again in " + get_check_interval() + " seconds.")
+            next_check_time = current_time + check_interval
+            print("Checking again in " + check_interval + " seconds.")
         if is_cert_expired(cert_data):
             renew_certificates()          
-            next_check_time = current_time + get_check_interval()
+            next_check_time = current_time + check_interval
         time.sleep(1)
 if __name__ == "__main__":
     main()
