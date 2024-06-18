@@ -85,19 +85,33 @@ def signal_handler(sig, frame):
 def main():
     run_once = False
     next_check_time = time.time()
+    
     while True:
         check_interval = get_check_interval()
         current_time = time.time()
+        
         cert_data, key_data = load_certificates()
+        
         if not cert_data or not key_data:
             print("Couldn't read the certificate or key file.")
-        if current_time >= next_check_time or run_once == False or interrupted or is_cert_expired(cert_data) and check_interval != 0:
+        
+        # Condition to renew certificates if expired or interrupted
+        if is_cert_expired(cert_data) or interrupted:
             renew_certificates()
+            next_check_time = current_time + check_interval  # Update next_check_time
+        
+        # Print the next check time if not in immediate renewal mode
+        if check_interval > 0 and current_time >= next_check_time:
+            print(f"Checking again in {check_interval} seconds.")
             next_check_time = current_time + check_interval
-            print("Checking again in " + str(check_interval) + " seconds.")
-        if check_interval == 0 and is_cert_expired(cert_data) or interrupted:
+        
+        # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
+        if check_interval == 0 and (is_cert_expired(cert_data) or interrupted):
             renew_certificates()
+        
         run_once = True
         time.sleep(1)
+
+
 if __name__ == "__main__":
     main()
