@@ -5,7 +5,7 @@ COPY extract.py /extract.py
 # Install any necessary dependencies
 RUN pip install pyOpenSSL
 # Set default environment variable
-ENV CHECK_INTERVAL=3600
+ENV CHECK_INTERVAL=0
 # Make sure the script is executable (if necessary)
 RUN chmod +x /extract.py
 # Command to run the script
