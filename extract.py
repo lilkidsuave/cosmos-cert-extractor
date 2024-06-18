@@ -92,7 +92,7 @@ def main():
         if current_time >= next_check_time and next_check_time != current_time:
             renew_certificates()          
             next_check_time = current_time + check_interval
-            print("Checking again in " + check_interval + " seconds.")
+            print("Checking again in " + str(check_interval) + " seconds.")
         if is_cert_expired(cert_data):
             renew_certificates()          
             next_check_time = current_time + check_interval
