@@ -94,7 +94,7 @@ def main():
             print("Couldn't read the certificate or key file.")
         
         # Condition to renew certificates if expired or interrupted
-        if is_cert_expired(cert_data) or interrupted:
+        if is_cert_expired(cert_data) or interrupted and check_interval > 0:
             print("Renewing Certificate")
             renew_certificates()
             print(f"Checking again in {check_interval} seconds.")
