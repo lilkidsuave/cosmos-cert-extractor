@@ -77,7 +77,6 @@ def get_check_interval():
 
 def signal_handler(sig, frame):
     global interrupted
-    print(f"Received signal {sig}. Updating certificates...")
     interrupted = True
     
 
