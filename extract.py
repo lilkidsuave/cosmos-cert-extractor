@@ -90,7 +90,12 @@ def main():
         cert_data, key_data = load_certificates()
         
         if not cert_data or not key_data:
-            print("Couldn't read the certificate or key file.")
+            print("Couldn't read the certificate or key file. Loading from config.")
+            config_object = load_config()
+            if config_object:
+                cert = config_object["HTTPConfig"]["TLSCert"]
+                key = config_object["HTTPConfig"]["TLSKey"]
+                write_certificates(cert, key)
             
         if run_once == False and check_interval > 0:
             renew_certificates()
