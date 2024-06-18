@@ -40,7 +40,7 @@ def write_certificates(cert, key):
             cert_file.write(cert)
         with open(KEY_PATH, "w") as key_file:
             key_file.write(key)
-        print(f"Certificates written successfully. Checking again in {get_check_interval()} seconds.")
+        print(f"Certificates written successfully.")
     except OSError as e:
         print(f"Error writing certificates: {e}")
         
@@ -89,6 +89,7 @@ def main():
         if current_time >= next_check_time and next_check_time != current_time:
             renew_certificates()          
             next_check_time = current_time + get_check_interval()
+            print("Checking again in {get_check_interval()} seconds.")
         if is_cert_expired(cert_data):
             renew_certificates()          
             next_check_time = current_time + get_check_interval()
