@@ -10,7 +10,7 @@ from OpenSSL import crypto
 CONFIG_PATH = "/input/cosmos.config.json"
 CERT_PATH = "/output/certs/cert.pem"
 KEY_PATH = "/output/certs/key.pem"
-DEFAULT_CHECK_INTERVAL = 3600  # Default check interval (1 hour)
+DEFAULT_CHECK_INTERVAL = 0  # Default check interval is when ot expires
 
 # Event to indicate interruption by signal
 interrupted = False
