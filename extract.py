@@ -60,8 +60,6 @@ def renew_certificates():
                 interrupted = False  # Reset interruption flag
             else:
                 print("Couldn't read the config file.")
-        else:
-            print("Certificate is still valid.")
             
 def is_cert_expired(cert_data):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data)
@@ -97,16 +95,20 @@ def main():
         
         # Condition to renew certificates if expired or interrupted
         if is_cert_expired(cert_data) or interrupted:
+            print("Renewing Certificate")
             renew_certificates()
+            print(f"Checking again in {check_interval} seconds.")
             next_check_time = current_time + check_interval  # Update next_check_time
         
         # Print the next check time if not in immediate renewal mode
         if check_interval > 0 and current_time >= next_check_time:
+            print("Certificate is still valid.")
             print(f"Checking again in {check_interval} seconds.")
             next_check_time = current_time + check_interval
         
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
         if check_interval == 0 and (is_cert_expired(cert_data) or interrupted):
+            print("Renewing Certificate")
             renew_certificates()
         
         run_once = True
