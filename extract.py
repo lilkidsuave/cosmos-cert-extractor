@@ -80,8 +80,10 @@ def signal_handler(sig, frame):
     global interrupted
     print(f"Received signal {sig}. Updating certificates...")
     interrupted = True
+    
 
 def main():
+    run_once = False
     next_check_time = time.time()
     check_interval = get_check_interval()
     while True:
@@ -89,13 +91,11 @@ def main():
         cert_data, key_data = load_certificates()
         if not cert_data or not key_data:
             print("Couldn't read the certificate or key file.")
-        if current_time >= next_check_time and check_interval != 0:
-            renew_certificates()          
-            next_check_time = current_time + check_interval
-            print("Checking again in " + str(check_interval) + " seconds.")
-        if is_cert_expired(cert_data):
-            renew_certificates()          
-            next_check_time = current_time + check_interval
-        time.sleep(1)
+        if current_time >= next_check_time or run_once == False or is_cert_expired(cert_data):
+            renew_certificates()
+            if check_interval != 0:
+                next_check_time = current_time + check_interval
+                print("Checking again in " + str(check_interval) + " seconds.")
+        run_once = True
 if __name__ == "__main__":
     main()
