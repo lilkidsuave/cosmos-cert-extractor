@@ -51,7 +51,7 @@ def renew_certificates():
         print("Couldn't read the certificate or key file.")
     else:
         if is_cert_expired(cert_data) or interrupted:
-            print("Certificate expired or interrupted. Updating certificates...")
+            print(" Certificate expired or interrupted. Updating certificates...")
             config_object = load_config()
             if config_object:
                 cert = config_object["HTTPConfig"]["TLSCert"]
@@ -90,7 +90,7 @@ def main():
         cert_data, key_data = load_certificates()
         
         if not cert_data or not key_data:
-            print(" Couldn't read the certificate or key file. Loading from config.")
+            print("Couldn't read the certificate or key file. Loading from config.")
             config_object = load_config()
             if config_object:
                 cert = config_object["HTTPConfig"]["TLSCert"]
