@@ -45,6 +45,8 @@ def write_certificates(cert, key):
         print(f"Error writing certificates: {e}")
         
 def renew_certificates():
+    global interrupted
+    signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     cert_data, key_data = load_certificates()
     if not cert_data or not key_data:
         print("Couldn't read the certificate or key file.")
@@ -81,8 +83,6 @@ def signal_handler(sig, frame):
     interrupted = True
 
 def main():
-    global interrupted
-    signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     next_check_time = time.time()
     while True:
         current_time = time.time()
