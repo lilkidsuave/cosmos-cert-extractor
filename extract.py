@@ -89,7 +89,7 @@ def main():
         cert_data, key_data = load_certificates()
         if not cert_data or not key_data:
             print("Couldn't read the certificate or key file.")
-        if current_time >= next_check_time and next_check_time != current_time:
+        if current_time >= next_check_time and check_interval != 0:
             renew_certificates()          
             next_check_time = current_time + check_interval
             print("Checking again in " + str(check_interval) + " seconds.")
