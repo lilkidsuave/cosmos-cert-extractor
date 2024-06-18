@@ -2,6 +2,7 @@
 
 import json
 import os
+import signal
 import time
 from datetime import datetime
 from OpenSSL import crypto
@@ -11,11 +12,15 @@ CERT_PATH = "/output/certs/cert.pem"
 KEY_PATH = "/output/certs/key.pem"
 DEFAULT_CHECK_INTERVAL = 3600  # Default check interval (1 hour)
 
+# Event to indicate interruption by signal
+interrupted = False
+
 def load_config():
     try:
         with open(CONFIG_PATH, "r") as conf_file:
             return json.load(conf_file)
-    except OSError:
+    except OSError as e:
+        print(f"Error reading config file: {e}")
         return None
 
 def load_certificates():
@@ -25,17 +30,19 @@ def load_certificates():
         with open(KEY_PATH, "r") as key_file:
             key_data = key_file.read()
         return cert_data, key_data
-    except OSError:
+    except OSError as e:
+        print(f"Error reading certificates: {e}")
         return None, None
 
 def write_certificates(cert, key):
-    with open(CERT_PATH, "w") as cert_file:
-        cert_file.write(cert)
-    
-    with open(KEY_PATH, "w") as key_file:
-        key_file.write(key)
-
-    print("Cert extracted successfully. Checking again in {check_interval} seconds")
+    try:
+        with open(CERT_PATH, "w") as cert_file:
+            cert_file.write(cert)
+        with open(KEY_PATH, "w") as key_file:
+            key_file.write(key)
+        print(f"Certificates written successfully. Checking again in {get_check_interval()} seconds.")
+    except OSError as e:
+        print(f"Error writing certificates: {e}")
 
 def is_cert_expired(cert_data):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data)
@@ -50,31 +57,41 @@ def get_check_interval():
         print(f"Invalid CHECK_INTERVAL value. Using default: {DEFAULT_CHECK_INTERVAL} seconds.")
         return DEFAULT_CHECK_INTERVAL
 
+def signal_handler(sig, frame):
+    global interrupted
+    print(f"Received signal {sig}. Updating certificates...")
+    interrupted = True
+
 def main():
-    # Ensure it runs at least once
-    run_once = False
-    check_interval = get_check_interval()
+    global interrupted
+    signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
+
+    next_check_time = time.time()
 
     while True:
-        cert_data, key_data = load_certificates()
-        if not cert_data or not key_data:
-            print(f"Couldn't read the certificate or key file. Checking again in {check_interval} seconds")
-            time.sleep(check_interval)
-            continue
+        current_time = time.time()
 
-        if not run_once or is_cert_expired(cert_data):
-            config_object = load_config()
-            if config_object:
-                cert = config_object["HTTPConfig"]["TLSCert"]
-                key = config_object["HTTPConfig"]["TLSKey"]
-                write_certificates(cert, key)
-                run_once = True
+        if current_time >= next_check_time:
+            cert_data, key_data = load_certificates()
+            if not cert_data or not key_data:
+                print("Couldn't read the certificate or key file.")
             else:
-                print(f"Couldn't read the config file. Checking again in {check_interval} seconds")
-        else:
-            print(f"Certificate is still valid. Checking again in {check_interval} seconds")
-        
-        time.sleep(check_interval)
+                if is_cert_expired(cert_data) or interrupted:
+                    print("Certificate expired or interrupted. Updating certificates...")
+                    config_object = load_config()
+                    if config_object:
+                        cert = config_object["HTTPConfig"]["TLSCert"]
+                        key = config_object["HTTPConfig"]["TLSKey"]
+                        write_certificates(cert, key)
+                        interrupted = False  # Reset interruption flag
+                    else:
+                        print("Couldn't read the config file.")
+                else:
+                    print("Certificate is still valid.")
+
+                next_check_time = current_time + get_check_interval()
+
+        time.sleep(1)  # Short sleep to avoid busy-waiting
 
 if __name__ == "__main__":
     main()
