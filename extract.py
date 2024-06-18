@@ -92,27 +92,26 @@ def main():
         
         if not cert_data or not key_data:
             print("Couldn't read the certificate or key file.")
-        
+        if run_once == False:
+            renew_certificates()
+            print("First Run Certificate")
         # Condition to renew certificates if expired or interrupted
-        if is_cert_expired(cert_data) or interrupted or run_once == False and check_interval > 0:
+        if is_cert_expired(cert_data) or interrupted and check_interval > 0:
             print("Renewing Certificate")
             renew_certificates()
             print(f"Checking again in {check_interval} seconds.")
             next_check_time = current_time + check_interval  # Update next_check_time
-            run_once = True
         
         # Print the next check time if not in immediate renewal mode
-        if check_interval > 0  or run_once == False and current_time >= next_check_time:
+        if check_interval > 0  and current_time >= next_check_time:
             print("Certificate is still valid.")
             print(f"Checking again in {check_interval} seconds.")
             next_check_time = current_time + check_interval
-            run_once = True
         
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
-        if check_interval == 0 or run_once == False and (is_cert_expired(cert_data) or interrupted):
+        if check_interval == 0 and (is_cert_expired(cert_data) or interrupted):
             print("Renewing Certificate")
             renew_certificates()
-            run_once = True
         run_once = True
         time.sleep(1)
 
