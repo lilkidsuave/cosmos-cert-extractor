@@ -104,7 +104,6 @@ def main():
             print("First Run Certificate")
         # Condition to renew certificates if expired or interrupted
         if is_cert_expired(cert_data) or interrupted and check_interval > 0:
-            print("Renewing Certificate")
             renew_certificates()
             print(f"Checking again in {check_interval} seconds.")
             next_check_time = current_time + check_interval  # Update next_check_time
@@ -117,7 +116,6 @@ def main():
         
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
         if check_interval == 0 and (is_cert_expired(cert_data) or interrupted):
-            print("Renewing Certificate")
             renew_certificates()
             
         run_once = True
