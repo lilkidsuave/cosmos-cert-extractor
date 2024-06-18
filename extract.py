@@ -43,7 +43,25 @@ def write_certificates(cert, key):
         print(f"Certificates written successfully. Checking again in {get_check_interval()} seconds.")
     except OSError as e:
         print(f"Error writing certificates: {e}")
-
+        
+def renew_certificates():
+    cert_data, key_data = load_certificates()
+    if not cert_data or not key_data:
+        print("Couldn't read the certificate or key file.")
+    else:
+        if is_cert_expired(cert_data) or interrupted:
+            print("Certificate expired or interrupted. Updating certificates...")
+            config_object = load_config()
+            if config_object:
+                cert = config_object["HTTPConfig"]["TLSCert"]
+                key = config_object["HTTPConfig"]["TLSKey"]
+                write_certificates(cert, key)
+                interrupted = False  # Reset interruption flag
+            else:
+                print("Couldn't read the config file.")
+        else:
+            print("Certificate is still valid.")
+            
 def is_cert_expired(cert_data):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data)
     expiry_date_str = cert.get_notAfter().decode('ascii')
@@ -65,33 +83,15 @@ def signal_handler(sig, frame):
 def main():
     global interrupted
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
-
     next_check_time = time.time()
-
     while True:
         current_time = time.time()
-
-        if current_time >= next_check_time:
-            cert_data, key_data = load_certificates()
-            if not cert_data or not key_data:
-                print("Couldn't read the certificate or key file.")
-            else:
-                if is_cert_expired(cert_data) or interrupted:
-                    print("Certificate expired or interrupted. Updating certificates...")
-                    config_object = load_config()
-                    if config_object:
-                        cert = config_object["HTTPConfig"]["TLSCert"]
-                        key = config_object["HTTPConfig"]["TLSKey"]
-                        write_certificates(cert, key)
-                        interrupted = False  # Reset interruption flag
-                    else:
-                        print("Couldn't read the config file.")
-                else:
-                    print("Certificate is still valid.")
-
-                next_check_time = current_time + get_check_interval()
-
-        time.sleep(1)  # Short sleep to avoid busy-waiting
-
+        if current_time >= next_check_time and next_check_time != current_time:
+            renew_certificates()          
+            next_check_time = current_time + get_check_interval()
+        if is_cert_expired(cert_data):
+            renew_certificates()          
+            next_check_time = current_time + get_check_interval()
+            
 if __name__ == "__main__":
     main()
