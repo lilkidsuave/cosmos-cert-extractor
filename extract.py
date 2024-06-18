@@ -85,8 +85,8 @@ def signal_handler(sig, frame):
 def main():
     run_once = False
     next_check_time = time.time()
-    check_interval = get_check_interval()
     while True:
+        check_interval = get_check_interval()
         current_time = time.time()
         cert_data, key_data = load_certificates()
         if not cert_data or not key_data:
