@@ -86,7 +86,7 @@ def main():
     run_once = False
     next_check_time = time.time()
     while True:
-        check_interval = int(get_check_interval())
+        check_interval = get_check_interval()
         current_time = time.time()
         cert_data, key_data = load_certificates()
         if not cert_data or not key_data:
