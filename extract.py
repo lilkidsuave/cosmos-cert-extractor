@@ -84,7 +84,8 @@ def main():
         check_interval = get_check_interval()
         current_time = time.time()
         cert_data, key_data = load_certificates()
-    
+        if not cert_data or not key_data:
+            renew_certificates()
         if run_once == False and check_interval > 0:
             renew_certificates()
             print("First Run Certificate")
