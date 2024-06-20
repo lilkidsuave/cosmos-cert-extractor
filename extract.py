@@ -45,7 +45,7 @@ def get_local_timezone():
     tz_name = os.getenv('TZ', 'UTC')
     if tz_name:
         try:
-            os.system(f'ln -snf /usr/share/zoneinfo/{timezone} /etc/localtime')
+            os.system(f'ln -snf /usr/share/zoneinfo/{tz_name} /etc/localtime')
             with open('/etc/timezone', 'w') as f:
                 f.write(timezone + '\n')
                 return pytz.timezone(tz_name)
