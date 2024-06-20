@@ -9,6 +9,6 @@ The `cert.pem` and `key.pem` file will be created and updated in `/output/certs`
 * `/opt/adguardhome/conf/certs/cert.pem`
 * `/opt/adguardhome/conf/certs/key.pem`
 
-## Default Values
-* `ENV CHECK_INTERVAL = 0` -> Timer in seconds disabled, put value other than 0 to enable.
-* `ENV WATCHDOG_ENABLED = true` -> Watchdog enabled, put false or 0 to disable.
+## Default Environment Values
+* `CHECK_INTERVAL = 0` -> Timer in seconds disabled, put value other than 0 to enable.
+* `WATCHDOG_ENABLED = true` -> Watchdog enabled, put false or 0 to disable.
