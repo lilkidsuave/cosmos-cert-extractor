@@ -123,9 +123,6 @@ def main():
         # Condition to renew certificates if expired or interrupted
         expired, expiry_date = is_cert_expired(cert_data)
         print(f'New certificate expires on {expiry_date}. ')
-        if expired:
-            
-             
         if expired and check_interval > 0:
             old_expiry_date = expiry_date
             renew_certificates()
