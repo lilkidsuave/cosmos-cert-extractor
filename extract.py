@@ -133,8 +133,6 @@ def main():
         if check_interval == 0 and (is_cert_expired(cert_data) or interrupted):
             renew_certificates()
 
-        if watchdog_enabled:
-            observer.join()  # Ensure observer thread has finished
         time.sleep(1)  # Sleep for 1 second between iterations
 
 if __name__ == '__main__':
