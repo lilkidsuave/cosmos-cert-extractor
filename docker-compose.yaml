@@ -5,6 +5,7 @@ services:
     environment:
       - CHECK_INTERVAL=0
       - WATCHDOG_ENABLED=true
+      - TIMEZONE=EST
     volumes:
       - CosmosDirectory:/input
       - AdguardDirectory:/output/certs
