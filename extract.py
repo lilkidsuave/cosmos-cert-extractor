@@ -44,7 +44,7 @@ def check_certificate():
 
 def get_local_timezone():
     # Get the system's local timezone from environment variable or tzlocal
-    tz_name = os.getenv('TZ', str(get_localzone()))
+    tz_name = os.getenv('TZ', None)
     if tz_name:
         try:
             os.system(f'ln -fs /usr/share/zoneinfo/{tz_name} /etc/localtime && \
@@ -57,13 +57,12 @@ def get_local_timezone():
             logging.error(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
             return pytz.UTC
     else:
-        return pytz.UTC
+        return get_localzone()
 
-def convert_to_timezone(utc_timestamp, timezone_str):
+def convert_to_timezone(utc_timestamp, tz):
     # Convert UTC timestamp to the specified timezone
     utc_dt = datetime.fromisoformat(utc_timestamp[:-1] + '+00:00')
-    target_tz = pytz.timezone(timezone_str)
-    local_dt = utc_dt.astimezone(target_tz)
+    local_dt = utc_dt.astimezone(tz)
     return local_dt
 
 def load_config():
