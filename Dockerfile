@@ -9,7 +9,6 @@ RUN pip install pyOpenSSL watchdog pytz tzlocal
 # Set default environment variable
 ENV CHECK_INTERVAL=0
 ENV WATCHDOG_ENABLED=true
-ENV TZ=AUTO
 # Make sure the script is executable (if necessary)
 RUN chmod +x /extract.py
 # Command to run the script
