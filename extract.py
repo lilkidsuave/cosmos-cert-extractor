@@ -29,7 +29,10 @@ def compute_relevant_config_hash(config_path):
     try:
         with open(config_path, 'r') as f:
             config = json.load(f)
-            relevant_data = json.dumps(config.get('HTTPConfig', {}), sort_keys=True).encode('utf-8')
+            relevant_data = json.dumps({
+                'TLSCert': config['HTTPConfig']['TLSCert'],
+                'TLSKey': config['HTTPConfig']['TLSKey']
+            }, sort_keys=True).encode('utf-8')
             hasher.update(relevant_data)
     except (OSError, json.JSONDecodeError) as e:
         print(f'Error computing hash for config file: {e}')
@@ -43,7 +46,7 @@ class ConfigChangeHandler(FileSystemEventHandler):
         # Check if the modified file is the config file
         if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0:
             new_config_hash = compute_relevant_config_hash(CONFIG_PATH)
-            if new_config_hash != current_config_hash:
+            if new_config_hash and new_config_hash != current_config_hash:
                 print('Configuration file changed, renewing certificates.')
                 current_config_hash = new_config_hash
                 renew_certificates()
@@ -174,7 +177,7 @@ def main():
         elif check_interval == 0 and expired:
             old_expiry_date = expiry_date
             renew_certificates()
-            expired, expiry_date = is_cert_expired(cert_data)
+            expired, expiry_date = is_cert_expired(cert_data, tz)
             print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
 
         time.sleep(1)
