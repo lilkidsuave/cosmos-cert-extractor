@@ -99,6 +99,7 @@ def renew_certificates():
         valid_until = config_object["HTTPConfig"]["TLSValidUntil"]
         write_certificates(cert, key)
         curr_valid_until = valid_until
+        print(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)}.')
     else:
         print('Couldn\'t read the config file.')
 
@@ -158,8 +159,9 @@ def main():
             next_check_time = current_time + check_interval
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
         elif check_interval == 0 and valid_until != curr_valid_until:
+            old_valid_until = curr_valid_until
+            print(f'Certificate expired on: {convert_to_timezone(old_valid_until, tz)}.')
             renew_certificates()
-            print(f'Certificate expired on: {convert_to_timezone(old_valid_until, tz)}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
 
         time.sleep(1)
 
