@@ -25,7 +25,7 @@ lock = threading.Lock()
 
 class ConfigFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if event.src_path == INPUT_PATH + and os.path.getsize(event.src_path) > 0:
+        if event.src_path == INPUT_PATH and os.path.getsize(event.src_path) > 0:
             renew_certificate()
             
 def get_local_timezone():
