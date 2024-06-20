@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from OpenSSL import crypto
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from dateutil import tz
 import pytz
 import hashlib
 
@@ -56,10 +57,11 @@ def get_timezone():
     # Get the timezone from the environment variable or use UTC as default.
     tz_name = os.getenv('TIMEZONE', 'UTC')
     try:
+        print(f'Timezone Selected = {tzname}')
         return pytz.timezone(tz_name)
     except pytz.UnknownTimeZoneError:
-        print(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
-        return pytz.UTC
+        print(f'Invalid timezone specified: {tz_name}. Using Auto instead.')
+        return tz.tzlocal()
 
 def load_config():
     # Load the configuration from the specified config file.
