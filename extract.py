@@ -9,9 +9,9 @@ from datetime import datetime, timezone
 from OpenSSL import crypto
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from dateutil import tz
 import pytz
 import hashlib
+from tzlocal import get_localzone  # Importing get_localzone from tzlocal
 
 # Paths to configuration and certificate files
 CONFIG_PATH = '/input/cosmos.config.json'
@@ -40,28 +40,17 @@ def compute_relevant_config_hash(config_path):
         return None
     return hasher.hexdigest()
 
-class ConfigChangeHandler(FileSystemEventHandler):
-    # Handler for file system events. Triggers certificate renewal on config file modification.
-    def on_modified(self, event):
-        global current_config_hash
-        # Check if the modified file is the config file
-        if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0:
-            new_config_hash = compute_relevant_config_hash(CONFIG_PATH)
-            if new_config_hash and new_config_hash != current_config_hash:
-                print('Configuration file changed, renewing certificates.')
-                current_config_hash = new_config_hash
-                renew_certificates()
-                time.sleep(1)
-
-def get_timezone():
-    # Get the timezone from the environment variable or use UTC as default.
-    tz_name = os.getenv('TIMEZONE', 'UTC')
-    try:
-        print(f'Timezone Selected = {tz_name}')
-        return pytz.timezone(tz_name)
-    except pytz.UnknownTimeZoneError:
-        print(f'Invalid timezone specified: {tz_name}. Using Auto instead.')
-        return tz.tzlocal()
+def get_local_timezone():
+    # Get the system's local timezone from environment variable or tzlocal
+    tz_name = os.getenv('TIMEZONE')
+    if tz_name:
+        try:
+            return pytz.timezone(tz_name)
+        except pytz.UnknownTimeZoneError:
+            print(f'Invalid timezone specified: {tz_name}. Using Auto instead.')
+            return get_localzone()
+    else:
+        return get_localzone()
 
 def load_config():
     # Load the configuration from the specified config file.
@@ -143,10 +132,7 @@ def main():
     global current_config_hash
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     next_check_time = time.time()
-    current_time = time.time()
-    check_interval = get_check_interval()
-    next_check_time = current_time + check_interval
-    tz = get_timezone()
+    tz = get_local_timezone()  # Get the local timezone
     renew_certificates()  # Initial renewal of certificates
     watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
     current_config_hash = compute_relevant_config_hash(CONFIG_PATH)  # Compute initial hash
