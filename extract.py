@@ -12,6 +12,10 @@ from watchdog.events import FileSystemEventHandler
 import pytz
 import hashlib
 from tzlocal import get_localzone  # Importing get_localzone from tzlocal
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
 # Paths to configuration and certificate files
 CONFIG_PATH = '/input/cosmos.config.json'
@@ -26,13 +30,16 @@ lock = threading.Lock()
 
 class ConfigFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        valid_until = config_object["HTTPConfig"]["TLSValidUntil"]
-        if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0 and valid_until != curr_valid_until:
-            renew_certificates()
+        global curr_valid_until
+        global valid_until
+        with lock:
+            valid_until = config_object["HTTPConfig"]["TLSValidUntil"]
+            if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0 and valid_until != curr_valid_until:
+                renew_certificates()
 
 def get_local_timezone():
     # Get the system's local timezone from environment variable or tzlocal
-    tz_name = os.getenv('TZ', get_localzone())
+    tz_name = os.getenv('TZ', str(get_localzone()))
     if tz_name:
         try:
             os.system(f'ln -fs /usr/share/zoneinfo/{tz_name} /etc/localtime && \
@@ -42,10 +49,10 @@ def get_local_timezone():
                 f.write(tz_name + '\n')
             return pytz.timezone(tz_name)
         except pytz.UnknownTimeZoneError:
-            print(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
+            logging.error(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
             return pytz.UTC
     else:
-        return get_localzone()
+        return pytz.UTC
 
 def convert_to_timezone(utc_timestamp, timezone_str):
     # Convert UTC timestamp to the specified timezone
@@ -60,7 +67,7 @@ def load_config():
         with open(CONFIG_PATH, 'r') as conf_file:
             return json.load(conf_file)
     except OSError as e:
-        print(f'Error reading config file: {e}')
+        logging.error(f'Error reading config file: {e}')
         return None
 
 def load_certificates():
@@ -72,7 +79,7 @@ def load_certificates():
             key_data = key_file.read()
         return cert_data, key_data
     except OSError as e:
-        print(f'Error reading certificates: {e}')
+        logging.error(f'Error reading certificates: {e}')
         return None, None
 
 def write_certificates(cert, key):
@@ -82,13 +89,16 @@ def write_certificates(cert, key):
             cert_file.write(cert)
         with open(KEY_PATH, 'w') as key_file:
             key_file.write(key)
-        print('Certificates written successfully.')
+        logging.info('Certificates written successfully.')
     except OSError as e:
-        print(f'Error writing certificates: {e}')
+        logging.error(f'Error writing certificates: {e}')
 
 def renew_certificates():
     # Renew the certificates by reading from the config file and writing to the certificate files.
-    print('Updating certificates...')
+    global curr_valid_until
+    global valid_until
+    global tz
+    logging.info('Updating certificates...')
     config_object = load_config()
     if config_object:
         cert = config_object['HTTPConfig']['TLSCert']
@@ -96,16 +106,16 @@ def renew_certificates():
         valid_until = config_object["HTTPConfig"]["TLSValidUntil"]
         write_certificates(cert, key)
         curr_valid_until = valid_until
-        print(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)}.')
+        logging.info(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)}.')
     else:
-        print('Couldn\'t read the config file.')
+        logging.error('Couldn\'t read the config file.')
 
 def get_check_interval():
     # Get the check interval from the environment variable or use the default.
     try:
         return int(os.getenv('CHECK_INTERVAL', DEFAULT_CHECK_INTERVAL))
     except ValueError:
-        print(f'Invalid CHECK_INTERVAL value. Using default: {DEFAULT_CHECK_INTERVAL} seconds.')
+        logging.warning(f'Invalid CHECK_INTERVAL value. Using default: {DEFAULT_CHECK_INTERVAL} seconds.')
         return DEFAULT_CHECK_INTERVAL
 
 def get_watchdog_status():
@@ -114,9 +124,10 @@ def get_watchdog_status():
 
 def signal_handler(sig, frame):
     # Handle interrupt signal by setting the interrupted flag.
+    global interrupted
     with lock:
         interrupted = True
-    print('Received interrupt signal.')
+    logging.info('Received interrupt signal.')
     renew_certificates()
     interrupted = False
     time.sleep(1)
@@ -131,35 +142,36 @@ def main():
     tz = get_local_timezone()  # Get the local timezone
     renew_certificates()  # Initial renewal of certificates
     watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
-    print(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)}.')
+    logging.info(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)}.')
 
     if watchdog_enabled:
-        print('Watchdog enabled. Monitoring the configuration file for changes.')
+        logging.info('Watchdog enabled. Monitoring the configuration file for changes.')
         event_handler = ConfigFileHandler()
         observer = Observer()
         observer.schedule(event_handler, path=os.path.dirname(CONFIG_PATH), recursive=False)
         observer.start()
 
     while not watchdog_enabled:
-        interrupted = False
+        with lock:
+            interrupted = False
         check_interval = get_check_interval()  # Get the check interval
         current_time = time.time()
         # Condition to renew certificates if expired or interrupted
-        valid_until = config_object["HTTPConfig"]["TLSValidUntil"]
-        if valid_until != curr_valid_until and check_interval > 0:
-            old_valid_until = curr_valid_until
-            renew_certificates()
-            print(f'Certificate expired on: {convert_to_timezone(old_valid_until, tz)}. Updating again in {check_interval} seconds.')
-            next_check_time = current_time + check_interval  # Update next_check_time
-        elif check_interval > 0 and current_time >= next_check_time:
-            renew_certificates()
-            print(f'Updating again in {check_interval} seconds.')
-            next_check_time = current_time + check_interval
-        # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
-        elif check_interval == 0 and valid_until != curr_valid_until:
-            old_valid_until = curr_valid_until
-            print(f'Certificate expired on: {convert_to_timezone(old_valid_until, tz)}.')
-            renew_certificates()
+        with lock:
+            if valid_until != curr_valid_until and check_interval > 0:
+                old_valid_until = curr_valid_until
+                renew_certificates()
+                logging.info(f'Certificate expired on: {convert_to_timezone(old_valid_until, tz)}. Updating again in {check_interval} seconds.')
+                next_check_time = current_time + check_interval  # Update next_check_time
+            elif check_interval > 0 and current_time >= next_check_time:
+                renew_certificates()
+                logging.info(f'Updating again in {check_interval} seconds.')
+                next_check_time = current_time + check_interval
+            # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
+            elif check_interval == 0 and valid_until != curr_valid_until:
+                old_valid_until = curr_valid_until
+                logging.info(f'Certificate expired on: {convert_to_timezone(old_valid_until, tz)}.')
+                renew_certificates()
 
         time.sleep(1)
 
