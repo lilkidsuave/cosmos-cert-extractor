@@ -47,7 +47,7 @@ def get_local_timezone():
         try:
             os.system(f'ln -snf /usr/share/zoneinfo/{tz_name} /etc/localtime')
             with open('/etc/timezone', 'w') as f:
-                f.write(timezone + '\n')
+                f.write(tz_name + '\n')
                 return pytz.timezone(tz_name)
         except pytz.UnknownTimeZoneError:
             print(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
