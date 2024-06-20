@@ -88,6 +88,8 @@ def renew_certificates():
         key = config_object['HTTPConfig']['TLSKey']
         write_certificates(cert, key)
         print('Certificates updated.')
+        expired, expiry_date = is_cert_expired(cert_data, tz)
+        print(f'New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
     else:
         print('Couldn\'t read the config file.')
 
@@ -122,14 +124,12 @@ def signal_handler(sig, frame):
     time.sleep(1)
 
 def main():
+    
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     next_check_time = time.time()
     tz = get_local_timezone()  # Get the local timezone
     renew_certificates()  # Initial renewal of certificates
     watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
-    cert_data, key_data = load_certificates()
-    expired, expiry_date = is_cert_expired(cert_data, tz)
-    print(f'New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
 
     if watchdog_enabled:
         print('Watchdog enabled. Monitoring the configuration file for changes.')
@@ -149,7 +149,7 @@ def main():
             old_expiry_date = expiry_date
             renew_certificates()
             expired, expiry_date = is_cert_expired(cert_data, tz)
-            print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. Updating again in {check_interval} seconds.')
+            print(f'Old certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. Updating again in {check_interval} seconds.')
             next_check_time = current_time + check_interval  # Update next_check_time
         elif check_interval > 0 and current_time >= next_check_time:
             renew_certificates()
@@ -160,7 +160,7 @@ def main():
             old_expiry_date = expiry_date
             renew_certificates()
             expired, expiry_date = is_cert_expired(cert_data, tz)
-            print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
+            print(f'Old Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}.')
 
         time.sleep(1)
 
