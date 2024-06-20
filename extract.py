@@ -10,6 +10,7 @@ from OpenSSL import crypto
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import pytz
+import hashlib
 
 # Paths to configuration and certificate files
 CONFIG_PATH = '/input/cosmos.config.json'
@@ -20,15 +21,29 @@ DEFAULT_CHECK_INTERVAL = 0  # Default check interval is when it expires
 # Event to indicate interruption by signal
 interrupted = False
 lock = threading.Lock()
+current_config_hash = None
 
 class ConfigChangeHandler(FileSystemEventHandler):
     # Handler for file system events. Triggers certificate renewal on config file modification.
     def on_modified(self, event):
+        global current_config_hash
         # Check if the modified file is the config file
         if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0:
-            print('Configuration file changed, renewing certificates.')
-            renew_certificates()
-            time.sleep(1)
+            new_config_hash = compute_file_hash(CONFIG_PATH)
+            if new_config_hash != current_config_hash:
+                print('Configuration file changed, renewing certificates.')
+                current_config_hash = new_config_hash
+                renew_certificates()
+                time.sleep(1)
+
+def compute_file_hash(file_path):
+    # Compute the SHA-256 hash of a file
+    hasher = hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        buf = f.read()
+        hasher.update(buf)
+    return hasher.hexdigest()
+
 def get_timezone():
     # Get the timezone from the environment variable or use UTC as default.
     tz_name = os.getenv('TIMEZONE', 'UTC')
@@ -92,7 +107,6 @@ def is_cert_expired(cert_data, tz):
     expiry_date = expiry_date.astimezone(tz)  # Convert to specified timezone
     return expiry_date < datetime.now(tz), expiry_date  # Return expiry status and expiry date
 
-
 def get_check_interval():
     # Get the check interval from the environment variable or use the default.
     try:
@@ -116,22 +130,24 @@ def signal_handler(sig, frame):
     time.sleep(1)
 
 def main():
+    global current_config_hash
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     next_check_time = time.time()
     tz = get_timezone()
     renew_certificates()  # Initial renewal of certificates
-    watchdog_enabled = get_watchdog_status()# Check if watchdog is enabled
+    watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
+    current_config_hash = compute_file_hash(CONFIG_PATH)
     cert_data, key_data = load_certificates()
     expired, expiry_date = is_cert_expired(cert_data, tz)
     print(f'New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
-    
+
     if watchdog_enabled:
         print('Watchdog enabled. Monitoring the configuration file for changes.')
         event_handler = ConfigChangeHandler()
         observer = Observer()
         observer.schedule(event_handler, path=os.path.dirname(CONFIG_PATH), recursive=False)
         observer.start()
-        
+
     while True:
         interrupted = False
         check_interval = get_check_interval()  # Get the check interval
@@ -155,7 +171,7 @@ def main():
             renew_certificates()
             expired, expiry_date = is_cert_expired(cert_data)
             print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
-        
+
         time.sleep(1)
 
 if __name__ == '__main__':
