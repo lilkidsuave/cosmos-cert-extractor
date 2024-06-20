@@ -99,7 +99,6 @@ def signal_handler(sig, frame):
     with lock:
         interrupted = True
     print('Received interrupt signal. Updating certificates')
-    renew_certificates()
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
