@@ -88,9 +88,6 @@ def write_certificates(cert, key):
 
 def renew_certificates():
     # Renew the certificates by reading from the config file and writing to the certificate files.
-    global interrupted
-    global curr_valid_until
-    global valid_until
     print('Updating certificates...')
     config_object = load_config()
     if config_object:
@@ -117,7 +114,6 @@ def get_watchdog_status():
 
 def signal_handler(sig, frame):
     # Handle interrupt signal by setting the interrupted flag.
-    global interrupted
     with lock:
         interrupted = True
     print('Received interrupt signal.')
@@ -128,6 +124,8 @@ def signal_handler(sig, frame):
 def main():
     global curr_valid_until
     global valid_until
+    global interrupted
+    global tz
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     next_check_time = time.time()
     tz = get_local_timezone()  # Get the local timezone
