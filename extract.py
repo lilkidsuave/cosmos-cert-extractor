@@ -56,6 +56,7 @@ def renew_certificates():
                 key = config_object["HTTPConfig"]["TLSKey"]
                 write_certificates(cert, key)
                 interrupted = False  # Reset interruption flag
+                print("Certificates updated.")
             else:
                 print("Couldn't read the config file.")
                 
