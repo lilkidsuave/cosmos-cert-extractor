@@ -1,5 +1,5 @@
 # Use an appropriate base image
-FROM python:3.12
+FROM python:3.12-slim
 RUN apt-get update -y
 RUN apt-get install -y tzdata
 # Copy the script into the container
