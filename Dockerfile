@@ -11,7 +11,7 @@ RUN pip install pyOpenSSL watchdog pytz tzlocal
 # Set default environment variable
 ENV CHECK_INTERVAL=0
 ENV WATCHDOG_ENABLED=true
-ENV TZ=EST
+ENV TZ=America/New_York
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Make sure the script is executable (if necessary)
 RUN chmod +x /extract.py
