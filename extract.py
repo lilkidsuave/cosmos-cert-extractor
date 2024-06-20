@@ -43,7 +43,7 @@ class ConfigChangeHandler(FileSystemEventHandler):
         # Check if the modified file is the config file
         if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0:
             new_config_hash = compute_relevant_config_hash(CONFIG_PATH)
-            if new_config_hash and new_config_hash != current_config_hash:
+            if new_config_hash != current_config_hash:
                 print('Configuration file changed, renewing certificates.')
                 current_config_hash = new_config_hash
                 renew_certificates()
