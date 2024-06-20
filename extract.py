@@ -105,7 +105,8 @@ def main():
     next_check_time = time.time()
     renew_certificates()  # Initial renewal of certificates
     watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
-
+    global interrupted
+    
     if watchdog_enabled:
         print('Watchdog enabled. Monitoring the configuration file for changes.')
         event_handler = ConfigChangeHandler()
