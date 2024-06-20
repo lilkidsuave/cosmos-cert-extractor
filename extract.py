@@ -148,7 +148,7 @@ def signal_handler(sig, frame):
     time.sleep(1)
 
 def main():
-    
+    global tz
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     next_check_time = time.time()
     tz = get_local_timezone()  # Get the local timezone
