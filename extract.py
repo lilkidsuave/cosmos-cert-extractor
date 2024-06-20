@@ -23,26 +23,31 @@ interrupted = False
 lock = threading.Lock()
 current_config_hash = None
 
+def compute_relevant_config_hash(config_path):
+    # Compute the SHA-256 hash of the relevant parts of the config file
+    hasher = hashlib.sha256()
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            relevant_data = json.dumps(config.get('HTTPConfig', {}), sort_keys=True).encode('utf-8')
+            hasher.update(relevant_data)
+    except (OSError, json.JSONDecodeError) as e:
+        print(f'Error computing hash for config file: {e}')
+        return None
+    return hasher.hexdigest()
+
 class ConfigChangeHandler(FileSystemEventHandler):
     # Handler for file system events. Triggers certificate renewal on config file modification.
     def on_modified(self, event):
         global current_config_hash
         # Check if the modified file is the config file
         if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0:
-            new_config_hash = compute_file_hash(CONFIG_PATH)
-            if new_config_hash != current_config_hash:
+            new_config_hash = compute_relevant_config_hash(CONFIG_PATH)
+            if new_config_hash and new_config_hash != current_config_hash:
                 print('Configuration file changed, renewing certificates.')
                 current_config_hash = new_config_hash
                 renew_certificates()
                 time.sleep(1)
-
-def compute_file_hash(file_path):
-    # Compute the SHA-256 hash of a file
-    hasher = hashlib.sha256()
-    with open(file_path, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-    return hasher.hexdigest()
 
 def get_timezone():
     # Get the timezone from the environment variable or use UTC as default.
@@ -136,7 +141,7 @@ def main():
     tz = get_timezone()
     renew_certificates()  # Initial renewal of certificates
     watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
-    current_config_hash = compute_file_hash(CONFIG_PATH)
+    current_config_hash = compute_relevant_config_hash(CONFIG_PATH)  # Compute initial hash
     cert_data, key_data = load_certificates()
     expired, expiry_date = is_cert_expired(cert_data, tz)
     print(f'New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
