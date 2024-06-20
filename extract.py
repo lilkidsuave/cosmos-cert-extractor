@@ -38,6 +38,7 @@ def check_certificate():
             write_certificates(cert, key)
             curr_valid_until = valid_until
             print(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)}.')
+            time.sleep(1)
     else:
         print("Cosmos config file not found.")
         sys.exit()
@@ -117,6 +118,7 @@ def main():
     observer = Observer()
     observer.schedule(event_handler, path=os.path.dirname(CONFIG_PATH), recursive=False)
     observer.start()
+    
 
 if __name__ == '__main__':
     main()
