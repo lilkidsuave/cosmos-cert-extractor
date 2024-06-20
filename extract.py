@@ -99,7 +99,6 @@ def main():
         if check_interval == 0 and (is_cert_expired(cert_data) or interrupted):
             renew_certificates()
             
-        run_once = True
         time.sleep(1)
 
 
