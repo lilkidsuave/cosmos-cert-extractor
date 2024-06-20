@@ -36,8 +36,7 @@ def check_certificate():
         if valid_until != curr_valid_until:
             write_certificates(cert, key)
             curr_valid_until = valid_until
-            expired, expiry_date = is_cert_expired(cert_data, tz)
-            print(f'New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
+            print(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)} {expiry_date.tzinfo}.')
     else:
         print("Cosmos config file not found.")
         sys.exit()
@@ -91,13 +90,12 @@ def write_certificates(cert, key):
     except OSError as e:
         print(f'Error writing certificates: {e}')
 
-def is_cert_expired(cert_data, tz):
-    # Check if the certificate has expired and convert the expiry date to the specified timezone.
-    cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data)
-    expiry_date_str = cert.get_notAfter().decode('ascii')
-    expiry_date = datetime.strptime(expiry_date_str, '%Y%m%d%H%M%SZ').replace(tzinfo=timezone.utc)
-    expiry_date = expiry_date.astimezone(tz)  # Convert to specified timezone
-    return expiry_date < datetime.now(tz), expiry_date  # Return expiry status and expiry date
+def convert_to_timezone(utc_timestamp, timezone_str):
+    # Convert UTC timestamp to the specified timezone
+    utc_dt = datetime.fromisoformat(utc_timestamp[:-1] + '+00:00')
+    target_tz = pytz.timezone(timezone_str)
+    local_dt = utc_dt.astimezone(target_tz)
+    return local_dt
     
 def signal_handler(sig, frame):
     # Handle interrupt signal by setting the interrupted flag.
@@ -110,6 +108,7 @@ def signal_handler(sig, frame):
     time.sleep(1)
 
 def main():
+    global tz
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     tz = get_local_timezone()
     check_certificate()  # Initial renewal of certificates
