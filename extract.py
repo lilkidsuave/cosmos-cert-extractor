@@ -166,7 +166,7 @@ def main():
         if expired and check_interval > 0:
             old_expiry_date = expiry_date
             renew_certificates()
-            expired, expiry_date = is_cert_expired(cert_data)
+            expired, expiry_date = is_cert_expired(cert_data, tz)
             print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. Updating again in {check_interval} seconds.')
             next_check_time = current_time + check_interval  # Update next_check_time
         elif check_interval > 0 and current_time >= next_check_time:
