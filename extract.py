@@ -157,7 +157,7 @@ def main():
 
     if watchdog_enabled:
         print('Watchdog enabled. Monitoring the configuration file for changes.')
-        event_handler = ConfigFileHandler()
+        event_handler = ConfigChangeHandler()
         observer = Observer()
         observer.schedule(event_handler, path=os.path.dirname(CONFIG_PATH), recursive=False)
         observer.start()
