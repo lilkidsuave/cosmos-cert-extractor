@@ -5,7 +5,8 @@ services:
     environment:
       - CHECK_INTERVAL=0
       - WATCHDOG_ENABLED=true
-      - TIMEZONE=Auto
+      - TZ=EST
     volumes:
+      - /etc/localtime:/etc/localtime:ro
       - CosmosDirectory:/input
       - AdguardDirectory:/output/certs
