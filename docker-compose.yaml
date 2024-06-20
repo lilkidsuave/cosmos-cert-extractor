@@ -5,7 +5,7 @@ services:
     environment:
       - CHECK_INTERVAL=0
       - WATCHDOG_ENABLED=true
-      - TZ=EST
+      - #TZ=EST
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - CosmosDirectory:/input
