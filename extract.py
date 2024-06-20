@@ -6,10 +6,11 @@ import signal
 import time
 from datetime import datetime, timezone
 from OpenSSL import crypto
+
 CONFIG_PATH = "/input/cosmos.config.json"
 CERT_PATH = "/output/certs/cert.pem"
 KEY_PATH = "/output/certs/key.pem"
-DEFAULT_CHECK_INTERVAL = 0  # Default check interval is when ot expires
+DEFAULT_CHECK_INTERVAL = 0  # Default check interval is when it expires
 
 # Event to indicate interruption by signal
 interrupted = False
@@ -42,30 +43,29 @@ def write_certificates(cert, key):
         print(f"Certificates written successfully.")
     except OSError as e:
         print(f"Error writing certificates: {e}")
-        
+
 def renew_certificates():
     global interrupted
-    global cert_data 
+    global cert_data
     global key_data
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     cert_data, key_data = load_certificates()
-    print(" Updating certificates...")
-            config_object = load_config()
-            if config_object:
-                cert = config_object["HTTPConfig"]["TLSCert"]
-                key = config_object["HTTPConfig"]["TLSKey"]
-                write_certificates(cert, key)
-                interrupted = False  # Reset interruption flag
-                print("Certificates updated.")
-            else:
-                print("Couldn't read the config file.")
-                
+    print("Updating certificates...")
+    config_object = load_config()
+    if config_object:
+        cert = config_object["HTTPConfig"]["TLSCert"]
+        key = config_object["HTTPConfig"]["TLSKey"]
+        write_certificates(cert, key)
+        interrupted = False  # Reset interruption flag
+        print("Certificates updated.")
+    else:
+        print("Couldn't read the config file.")
+
 def is_cert_expired(cert_data):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data)
     expiry_date_str = cert.get_notAfter().decode('ascii')
     expiry_date = datetime.strptime(expiry_date_str, '%Y%m%d%H%M%SZ').replace(tzinfo=timezone.utc)
     return expiry_date < datetime.now(timezone.utc)
-
 
 def get_check_interval():
     try:
@@ -77,7 +77,6 @@ def get_check_interval():
 def signal_handler(sig, frame):
     global interrupted
     interrupted = True
-    
 
 def main():
     next_check_time = time.time()
@@ -87,23 +86,22 @@ def main():
         current_time = time.time()
         cert_data, key_data = load_certificates()
         # Condition to renew certificates if expired or interrupted
-        if is_cert_expired(cert_data) or interrupted and check_interval > 0:
+        if is_cert_expired(cert_data) or (interrupted and check_interval > 0):
             renew_certificates()
             print(f"Checking again in {check_interval} seconds.")
             next_check_time = current_time + check_interval  # Update next_check_time
-        
+
         # Print the next check time if not in immediate renewal mode
-        if check_interval > 0  and current_time >= next_check_time:
+        if check_interval > 0 and current_time >= next_check_time:
             print("Certificate is still valid.")
             print(f"Checking again in {check_interval} seconds.")
             next_check_time = current_time + check_interval
-        
+
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
         if check_interval == 0 and (is_cert_expired(cert_data) or interrupted):
             renew_certificates()
-            
-        time.sleep(1)
 
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
