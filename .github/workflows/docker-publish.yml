@@ -1,14 +1,7 @@
 name: Docker Build and Push to GHCR
 
 on:
-  push:
-    branches:
-      - interupts # Trigger the workflow on push to the main branch
-  pull_request:
-    branches:
-      - interupts  # Trigger the workflow on pull requests to the main branch
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
