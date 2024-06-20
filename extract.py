@@ -58,6 +58,7 @@ def renew_certificates():
                 interrupted = False  # Reset interruption flag
             else:
                 print("Couldn't read the config file.")
+                
 def is_cert_expired(cert_data):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data)
     expiry_date_str = cert.get_notAfter().decode('ascii')
