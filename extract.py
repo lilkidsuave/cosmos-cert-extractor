@@ -113,32 +113,29 @@ def main():
         observer = Observer()
         observer.schedule(event_handler, path=os.path.dirname(CONFIG_PATH), recursive=False)
         observer.start()
+    while True:
+        check_interval = get_check_interval()  # Get the check interval
+        current_time = time.time()
+        cert_data, key_data = load_certificates()
+        # Condition to renew certificates if expired or interrupted
+        if is_cert_expired(cert_data) or interrupted and check_interval > 0:
+            renew_certificates()
+            print(f'Updating again in {check_interval} seconds.')
+            next_check_time = current_time + check_interval  # Update next_check_time
 
-    try:
-        while not interrupted:
-            check_interval = get_check_interval()  # Get the check interval
-            current_time = time.time()
-            cert_data, key_data = load_certificates()
-            # Condition to renew certificates if expired or interrupted
-            if is_cert_expired(cert_data) or interrupted and check_interval > 0:
-                renew_certificates()
-                print(f'Updating again in {check_interval} seconds.')
-                next_check_time = current_time + check_interval  # Update next_check_time
+        # Print the next check time if not in immediate renewal mode
+        if check_interval > 0 and current_time >= next_check_time:
+            renew_certificates()
+            print(f'Updating again in {check_interval} seconds.')
+            next_check_time = current_time + check_interval
 
-            # Print the next check time if not in immediate renewal mode
-            if check_interval > 0 and current_time >= next_check_time:
-                renew_certificates()
-                print(f'Updating again in {check_interval} seconds.')
-                next_check_time = current_time + check_interval
+        # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
+        if check_interval == 0 and (is_cert_expired(cert_data) or interrupted):
+            renew_certificates()
 
-            # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
-            if check_interval == 0 and (is_cert_expired(cert_data) or interrupted):
-                renew_certificates()
-
-            time.sleep(1)  # Sleep for 1 second between iterations
-            
-    if watchdog_enabled:
-        observer.join()  # Ensure observer thread has finished
+        if watchdog_enabled:
+            observer.join()  # Ensure observer thread has finished
+        time.sleep(1)  # Sleep for 1 second between iterations
 
 if __name__ == '__main__':
     main()
