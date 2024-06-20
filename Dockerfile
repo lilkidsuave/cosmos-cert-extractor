@@ -1,5 +1,7 @@
 # Use an appropriate base image
-FROM python:3.12-slim
+FROM python:3.12
+RUN apt-get update -y
+RUN apt-get install -y tzdata
 # Copy the script into the container
 COPY extract.py /extract.py 
 # Install any necessary dependencies
