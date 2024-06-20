@@ -45,8 +45,8 @@ def get_local_timezone():
     tz_name = os.getenv('TZ', get_localzone() )
     if tz_name:
         try:
-            os.system(f'ln -snf /usr/share/zoneinfo/{tz_name} && \
-    echo $TZ > /etc/timezone)
+            os.system(f'ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone')
             with open('/etc/timezone', 'w') as f:
                 f.write(tz_name + '\n')
                 return pytz.timezone(tz_name)
