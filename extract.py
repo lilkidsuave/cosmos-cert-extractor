@@ -47,8 +47,18 @@ def renew_certificates():
     global interrupted
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     cert_data, key_data = load_certificates()
-    if is_cert_expired(cert_data) or interrupted or not cert_data or not key_data:
-            print(" Certificate expired, not found, or interrupted. Updating certificates...")
+    if not cert_data or not key_data:
+            print(" Certificate not found. Updating certificates...")
+            config_object = load_config()
+            if config_object:
+                cert = config_object["HTTPConfig"]["TLSCert"]
+                key = config_object["HTTPConfig"]["TLSKey"]
+                write_certificates(cert, key)
+                interrupted = False  # Reset interruption flag
+            else:
+                print("Couldn't read the config file.")
+    if is_cert_expired(cert_data) or interrupted:
+            print(" Certificate expired, or interrupted. Updating certificates...")
             config_object = load_config()
             if config_object:
                 cert = config_object["HTTPConfig"]["TLSCert"]
