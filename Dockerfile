@@ -12,7 +12,9 @@ RUN pip install pyOpenSSL watchdog pytz tzlocal
 ENV CHECK_INTERVAL=0
 ENV WATCHDOG_ENABLED=true
 ENV TZ=America/New_York
-RUN dpkg-reconfigure -f noninteractive tzdata
+ARG TZ=America/New_York
+RUN echo $TZ > /etc/timezone && \
+    dpkg-reconfigure -f noninteractive tzdata
 # Make sure the script is executable (if necessary)
 RUN chmod +x /extract.py
 # Command to run the script
