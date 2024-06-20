@@ -24,7 +24,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/lilkidsuave/cosmos-cert-extractor:interupts
-
+          tags: |
+            ghcr.io/lilkidsuave/cosmos-cert-extractor:latest
+            ghcr.io/lilkidsuave/cosmos-cert-extractor:V1.00
       - name: Log out from GitHub Container Registry
         run: docker logout ghcr.io
