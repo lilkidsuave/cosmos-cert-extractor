@@ -47,8 +47,8 @@ def get_local_timezone():
         try:
             return pytz.timezone(tz_name)
         except pytz.UnknownTimeZoneError:
-            print(f'Invalid timezone specified: {tz_name}. Using Auto instead.')
-            return get_localzone()
+            print(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
+            return pytz.UTC
     else:
         return get_localzone()
 
