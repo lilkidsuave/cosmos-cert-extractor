@@ -93,8 +93,8 @@ def main():
 
         # Print the next check time if not in immediate renewal mode
         if check_interval > 0 and current_time >= next_check_time:
-            print("Certificate is still valid.")
-            print(f"Checking again in {check_interval} seconds.")
+            renew_certificates()
+            print(f"Updating again in {check_interval} seconds.")
             next_check_time = current_time + check_interval
 
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
