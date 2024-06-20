@@ -57,7 +57,7 @@ def get_timezone():
     # Get the timezone from the environment variable or use UTC as default.
     tz_name = os.getenv('TIMEZONE', 'UTC')
     try:
-        print(f'Timezone Selected = {tzname}')
+        print(f'Timezone Selected = {tz_name}')
         return pytz.timezone(tz_name)
     except pytz.UnknownTimeZoneError:
         print(f'Invalid timezone specified: {tz_name}. Using Auto instead.')
