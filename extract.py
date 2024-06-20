@@ -63,10 +63,6 @@ def write_certificates(cert, key):
 def renew_certificates():
     # Renew the certificates by reading from the config file and writing to the certificate files.
     global interrupted
-    with lock:
-        if interrupted:
-            print('Interrupted, exiting certificate renewal.')
-            return
     cert_data, key_data = load_certificates()
     print('Updating certificates...')
     config_object = load_config()
@@ -140,11 +136,7 @@ def main():
                 renew_certificates()
 
             time.sleep(1)  # Sleep for 1 second between iterations
-
-    except KeyboardInterrupt:
-        if watchdog_enabled:
-            observer.stop()  # Stop the watchdog observer if enabled
-        print('Process interrupted. Exiting...')
+            
     if watchdog_enabled:
         observer.join()  # Ensure observer thread has finished
 
