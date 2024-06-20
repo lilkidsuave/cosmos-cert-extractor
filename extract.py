@@ -27,6 +27,7 @@ class ConfigChangeHandler(FileSystemEventHandler):
         if event.src_path == CONFIG_PATH:
             print('Configuration file changed, renewing certificates.')
             renew_certificates()
+            time.sleep(0.0000001)
 
 def load_config():
     # Load the configuration from the specified config file.
@@ -101,6 +102,7 @@ def signal_handler(sig, frame):
     print('Received interrupt signal.')
     renew_certificates()
     interrupted = False
+    time.sleep(0.0000001)
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
@@ -140,7 +142,7 @@ def main():
             expired, expiry_date = is_cert_expired(cert_data)
             print(f'Certificate expired on: {old_expiry_date}. New certificate expires on {expiry_date}.')
         
-        time.sleep(0.1)
+        time.sleep(0.0000001)
 
 if __name__ == '__main__':
     main()
