@@ -168,7 +168,7 @@ def main():
         observer.schedule(event_handler, path=os.path.dirname(CONFIG_PATH), recursive=False)
         observer.start()
 
-    while not watchdog_enabled:
+    while True:
         interrupted = False
         check_interval = get_check_interval()  # Get the check interval
         current_time = time.time()
