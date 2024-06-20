@@ -98,6 +98,7 @@ def is_cert_expired(cert_data, tz):
     expiry_date = datetime.strptime(expiry_date_str, '%Y%m%d%H%M%SZ').replace(tzinfo=timezone.utc)
     expiry_date = expiry_date.astimezone(tz)  # Convert to specified timezone
     return expiry_date < datetime.now(tz), expiry_date  # Return expiry status and expiry date
+    
 def signal_handler(sig, frame):
     # Handle interrupt signal by setting the interrupted flag.
     global interrupted
