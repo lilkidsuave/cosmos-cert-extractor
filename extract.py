@@ -45,6 +45,8 @@ def write_certificates(cert, key):
         
 def renew_certificates():
     global interrupted
+    global cert_data 
+    global key_data
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     cert_data, key_data = load_certificates()
     if not cert_data or not key_data:
