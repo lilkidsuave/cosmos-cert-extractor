@@ -22,7 +22,7 @@ DEFAULT_CHECK_INTERVAL = 0  # Default check interval is when it expires
 # Event to indicate interruption by signal
 interrupted = False
 lock = threading.Lock()
-
+current_config_hash = None
 def compute_relevant_config_hash(config_path):
     # Compute the SHA-256 hash of the relevant parts of the config file
     hasher = hashlib.sha256()
@@ -152,7 +152,7 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     next_check_time = time.time()
     tz = get_local_timezone()  # Get the local timezone
-    renew_certificates()  # Initial renewal of certificates
+    current_config_hash = compute_relevant_config_hash(CONFIG_PATH)
     watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
 
     if watchdog_enabled:
