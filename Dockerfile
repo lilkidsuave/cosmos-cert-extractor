@@ -2,6 +2,7 @@
 FROM python:3.12-slim
 RUN apt-get update -y
 RUN apt-get install -y tzdata
+RUN date
 # Copy the script into the container
 COPY extract.py /extract.py 
 # Install any necessary dependencies
