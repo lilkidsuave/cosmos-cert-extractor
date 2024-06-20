@@ -2,7 +2,6 @@
 FROM python:3.12-slim
 RUN apt-get update -y
 RUN apt-get install -y tzdata
-RUN date
 # Copy the script into the container
 COPY extract.py /extract.py 
 # Install any necessary dependencies
@@ -11,6 +10,7 @@ RUN pip install pyOpenSSL watchdog pytz tzlocal
 ENV CHECK_INTERVAL=0
 ENV WATCHDOG_ENABLED=true
 ENV TZ=EST
+RUN date
 # Make sure the script is executable (if necessary)
 RUN chmod +x /extract.py
 # Command to run the script
