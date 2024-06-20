@@ -23,36 +23,37 @@ valid_until = 1
 # Event to indicate interruption by signal
 interrupted = False
 lock = threading.Lock()
+
 class ConfigFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        valid_until = config_object["HTTPConfig"]["TLSValidUntil]
-        if event.src_path == INPUT_PATH and os.path.getsize(event.src_path) > 0 and valid_until != curr_valid_until:
+        valid_until = config_object["HTTPConfig"]["TLSValidUntil"]
+        if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0 and valid_until != curr_valid_until:
             renew_certificates()
-            
+
 def get_local_timezone():
     # Get the system's local timezone from environment variable or tzlocal
-    tz_name = os.getenv('TZ', get_localzone() )
+    tz_name = os.getenv('TZ', get_localzone())
     if tz_name:
         try:
             os.system(f'ln -fs /usr/share/zoneinfo/{tz_name} /etc/localtime && \
-    dpkg-reconfigure -f noninteractive tzdata && \
-    echo {tz_name} > /etc/timezone')
+                        dpkg-reconfigure -f noninteractive tzdata && \
+                        echo {tz_name} > /etc/timezone')
             with open('/etc/timezone', 'w') as f:
                 f.write(tz_name + '\n')
-                return pytz.timezone(tz_name)
+            return pytz.timezone(tz_name)
         except pytz.UnknownTimeZoneError:
             print(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
             return pytz.UTC
     else:
         return get_localzone()
-        
+
 def convert_to_timezone(utc_timestamp, timezone_str):
     # Convert UTC timestamp to the specified timezone
     utc_dt = datetime.fromisoformat(utc_timestamp[:-1] + '+00:00')
     target_tz = pytz.timezone(timezone_str)
     local_dt = utc_dt.astimezone(target_tz)
     return local_dt
-    
+
 def load_config():
     # Load the configuration from the specified config file.
     try:
@@ -131,7 +132,7 @@ def main():
     tz = get_local_timezone()  # Get the local timezone
     renew_certificates()  # Initial renewal of certificates
     watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
-    print(f'New certificate expires on {convert_to_timezone(curr_valid_until,tz)}.')
+    print(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)}.')
 
     if watchdog_enabled:
         print('Watchdog enabled. Monitoring the configuration file for changes.')
@@ -145,11 +146,11 @@ def main():
         check_interval = get_check_interval()  # Get the check interval
         current_time = time.time()
         # Condition to renew certificates if expired or interrupted
-        valid_until = config_object["HTTPConfig"]["TLSValidUntil]
-        if valid_until != curr_valid_until: and check_interval > 0:
-            old_valid_until = curr_valid_until 
+        valid_until = config_object["HTTPConfig"]["TLSValidUntil"]
+        if valid_until != curr_valid_until and check_interval > 0:
+            old_valid_until = curr_valid_until
             renew_certificates()
-            print(f'Certificate expired on: {convert_to_timezone(old_valid_until,tz}. Updating again in {check_interval} seconds.')
+            print(f'Certificate expired on: {convert_to_timezone(old_valid_until, tz)}. Updating again in {check_interval} seconds.')
             next_check_time = current_time + check_interval  # Update next_check_time
         elif check_interval > 0 and current_time >= next_check_time:
             renew_certificates()
@@ -158,7 +159,7 @@ def main():
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
         elif check_interval == 0 and valid_until != curr_valid_until:
             renew_certificates()
-            print(f'Certificate expired on: {convert_to_timezone(old_valid_until,tz)}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
+            print(f'Certificate expired on: {convert_to_timezone(old_valid_until, tz)}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
 
         time.sleep(1)
 
