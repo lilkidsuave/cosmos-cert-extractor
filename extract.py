@@ -18,13 +18,15 @@ CONFIG_PATH = '/input/cosmos.config.json'
 CERT_PATH = '/output/certs/cert.pem'
 KEY_PATH = '/output/certs/key.pem'
 DEFAULT_CHECK_INTERVAL = 0  # Default check interval is when it expires
-curr_valid_until = None
+curr_valid_until = 0
+valid_until = 1
 # Event to indicate interruption by signal
 interrupted = False
 lock = threading.Lock()
 class ConfigFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if event.src_path == INPUT_PATH and os.path.getsize(event.src_path) > 0:
+        valid_until = config_object["HTTPConfig"]["TLSValidUntil]
+        if event.src_path == INPUT_PATH and os.path.getsize(event.src_path) > 0 and valid_until != curr_valid_until:
             renew_certificates()
             
 def get_local_timezone():
@@ -43,7 +45,14 @@ def get_local_timezone():
             return pytz.UTC
     else:
         return get_localzone()
-
+        
+def convert_to_timezone(utc_timestamp, timezone_str):
+    # Convert UTC timestamp to the specified timezone
+    utc_dt = datetime.fromisoformat(utc_timestamp[:-1] + '+00:00')
+    target_tz = pytz.timezone(timezone_str)
+    local_dt = utc_dt.astimezone(target_tz)
+    return local_dt
+    
 def load_config():
     # Load the configuration from the specified config file.
     try:
@@ -80,15 +89,15 @@ def renew_certificates():
     # Renew the certificates by reading from the config file and writing to the certificate files.
     global interrupted
     global curr_valid_until
+    global valid_until
     print('Updating certificates...')
     config_object = load_config()
     if config_object:
         cert = config_object['HTTPConfig']['TLSCert']
         key = config_object['HTTPConfig']['TLSKey']
         valid_until = config_object["HTTPConfig"]["TLSValidUntil"]
-        if valid_until != curr_valid_until:
-            write_certificates(cert, key)
-            curr_valid_until = valid_until
+        write_certificates(cert, key)
+        curr_valid_until = valid_until
     else:
         print('Couldn\'t read the config file.')
 
@@ -116,12 +125,13 @@ def signal_handler(sig, frame):
 
 def main():
     global curr_valid_until
+    global valid_until
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
     next_check_time = time.time()
     tz = get_local_timezone()  # Get the local timezone
     renew_certificates()  # Initial renewal of certificates
     watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
-    print(f'New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
+    print(f'New certificate expires on {convert_to_timezone(curr_valid_until,tz)}.')
 
     if watchdog_enabled:
         print('Watchdog enabled. Monitoring the configuration file for changes.')
@@ -137,10 +147,9 @@ def main():
         # Condition to renew certificates if expired or interrupted
         valid_until = config_object["HTTPConfig"]["TLSValidUntil]
         if valid_until != curr_valid_until: and check_interval > 0:
-            old_expiry_date = expiry_date
+            old_valid_until = curr_valid_until 
             renew_certificates()
-            expired, expiry_date = is_cert_expired(cert_data, tz)
-            print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. Updating again in {check_interval} seconds.')
+            print(f'Certificate expired on: {convert_to_timezone(old_valid_until,tz}. Updating again in {check_interval} seconds.')
             next_check_time = current_time + check_interval  # Update next_check_time
         elif check_interval > 0 and current_time >= next_check_time:
             renew_certificates()
@@ -148,10 +157,8 @@ def main():
             next_check_time = current_time + check_interval
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
         elif check_interval == 0 and valid_until != curr_valid_until:
-            old_expiry_date = expiry_date
             renew_certificates()
-            expired, expiry_date = is_cert_expired(cert_data, tz)
-            print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
+            print(f'Certificate expired on: {convert_to_timezone(old_valid_until,tz)}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
 
         time.sleep(1)
 
