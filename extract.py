@@ -23,10 +23,34 @@ DEFAULT_CHECK_INTERVAL = 0  # Default check interval is when it expires
 interrupted = False
 lock = threading.Lock()
 
-class ConfigFileHandler(FileSystemEventHandler):
+def compute_relevant_config_hash(config_path):
+    # Compute the SHA-256 hash of the relevant parts of the config file
+    hasher = hashlib.sha256()
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            relevant_data = json.dumps({
+                'TLSCert': config['HTTPConfig']['TLSCert'],
+                'TLSKey': config['HTTPConfig']['TLSKey']
+            }, sort_keys=True).encode('utf-8')
+            hasher.update(relevant_data)
+    except (OSError, json.JSONDecodeError) as e:
+        print(f'Error computing hash for config file: {e}')
+        return None
+    return hasher.hexdigest()
+
+class ConfigChangeHandler(FileSystemEventHandler):
+    # Handler for file system events. Triggers certificate renewal on config file modification.
     def on_modified(self, event):
-        if event.src_path == INPUT_PATH and os.path.getsize(event.src_path) > 0:
-            renew_certificate()
+        global current_config_hash
+        # Check if the modified file is the config file
+        if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0:
+            new_config_hash = compute_relevant_config_hash(CONFIG_PATH)
+            if new_config_hash and new_config_hash != current_config_hash:
+                print('Configuration file changed, renewing certificates.')
+                current_config_hash = new_config_hash
+                renew_certificates()
+                time.sleep(1)
             
 def get_local_timezone():
     # Get the system's local timezone from environment variable or tzlocal
