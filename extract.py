@@ -134,6 +134,7 @@ def main():
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
         if check_interval == 0 and is_cert_expired(cert_data):
             renew_certificates()
+        time.sleep(0.1)
             
 if __name__ == '__main__':
     main()
