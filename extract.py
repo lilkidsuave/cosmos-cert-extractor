@@ -42,7 +42,7 @@ def compute_relevant_config_hash(config_path):
 
 def get_local_timezone():
     # Get the system's local timezone from environment variable or tzlocal
-    tz_name = os.getenv('TZ', 'UTC')
+    tz_name = os.getenv('TZ', get_localzone() )
     if tz_name:
         try:
             os.system(f'ln -snf /usr/share/zoneinfo/{tz_name} /etc/localtime')
