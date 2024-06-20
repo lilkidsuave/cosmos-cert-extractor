@@ -1,7 +1,9 @@
 # Use an appropriate base image
 FROM python:3.12-slim
-RUN apt-get update -y
-RUN apt-get install -y tzdata
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    tzdata && \
+    rm -rf /var/lib/apt/lists/*
 # Copy the script into the container
 COPY extract.py /extract.py 
 # Install any necessary dependencies
