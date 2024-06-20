@@ -5,6 +5,7 @@ import os
 import signal
 import threading
 import time
+import logging
 from datetime import datetime, timezone
 from OpenSSL import crypto
 from watchdog.observers import Observer
@@ -15,7 +16,7 @@ from tzlocal import get_localzone
 # Paths to configuration and certificate files
 CONFIG_PATH = '/input/cosmos.config.json'
 CERT_PATH = '/output/certs/cert.pem'
-KEY_PATH = '/output/certs/key.pem'  
+KEY_PATH = '/output/certs/key.pem'
 # Event to indicate interruption by signal
 interrupted = False
 lock = threading.Lock()
@@ -23,7 +24,7 @@ curr_valid_until = None
 
 class ConfigFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if event.src_path == INPUT_PATH and os.path.getsize(event.src_path) > 0:
+        if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0:
             check_certificate()
 
 def check_certificate():
@@ -36,7 +37,7 @@ def check_certificate():
         if valid_until != curr_valid_until:
             write_certificates(cert, key)
             curr_valid_until = valid_until
-            print(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)} {expiry_date.tzinfo}.')
+            print(f'New certificate expires on {convert_to_timezone(curr_valid_until, tz)}.')
     else:
         print("Cosmos config file not found.")
         sys.exit()
@@ -96,7 +97,7 @@ def write_certificates(cert, key):
         print('Certificates written successfully.')
     except OSError as e:
         print(f'Error writing certificates: {e}')
-        
+
 def signal_handler(sig, frame):
     # Handle interrupt signal by setting the interrupted flag.
     global interrupted
@@ -113,7 +114,7 @@ def main():
     tz = get_local_timezone()
     check_certificate()  # Initial renewal of certificates
     print('Watchdog enabled. Monitoring the configuration file for changes.')
-    event_handler = ConfigChangeHandler()
+    event_handler = ConfigFileHandler()
     observer = Observer()
     observer.schedule(event_handler, path=os.path.dirname(CONFIG_PATH), recursive=False)
     observer.start()
