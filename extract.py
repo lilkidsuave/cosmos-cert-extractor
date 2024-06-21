@@ -3,9 +3,9 @@
 from datetime import datetime, timezone
 import json
 import os
-import pytz
 import sys
 import time
+import zoneinfo
 from tzlocal import get_localzone
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
@@ -22,20 +22,25 @@ class ConfigFileHandler(FileSystemEventHandler):
 
 def get_local_timezone():
     # Get the system's local timezone from environment variable or tzlocal
-    tz_name = os.getenv('TZ', get_localzone().zone)
+    local_zone = get_localzone()
+    tz_name = os.getenv('TZ', None)
     if tz_name:
         try:
+            tz = zoneinfo.ZoneInfo(tz_name)
             os.system(f'ln -fs /usr/share/zoneinfo/{tz_name} /etc/localtime && \
 dpkg-reconfigure -f noninteractive tzdata && \
 echo {tz_name} > /etc/timezone')
             with open('/etc/timezone', 'w') as f:
                 f.write(tz_name + '\n')
-            return pytz.timezone(tz_name)
-        except pytz.UnknownTimeZoneError:
+            return tz
+        except zoneinfo.ZoneInfoNotFoundError:
             print(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
-            return pytz.UTC
+            return zoneinfo.ZoneInfo('UTC')
     else:
-        return get_localzone()
+        if isinstance(local_zone, zoneinfo.ZoneInfo):
+            return local_zone
+        else:
+            return zoneinfo.ZoneInfo('UTC')
 
 def check_certificate():
     global curr_valid_until
