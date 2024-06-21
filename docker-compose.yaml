@@ -3,9 +3,7 @@ services:
   cert_checker:
     image: ghcr.io/lilkidsuave/cosmos-cert-extractor:latest
     environment:
-      - CHECK_INTERVAL=0
-      - WATCHDOG_ENABLED=true
-      - TZ=EST
+      - TZ=UTC
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - CosmosDirectory:/input
