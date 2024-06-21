@@ -58,13 +58,17 @@ def check_certificate():
             write_certificates(cert, key)
             curr_valid_until = valid_until
 
+            # Trim microseconds if present
+            if '.' in valid_until:
+                valid_until = valid_until.rsplit('.', 1)[0] + 'Z'
+
             # Print certificate expiration date with timezone
             local_tz = get_local_timezone()
             try:
-                valid_until_dt = datetime.strptime(valid_until, "%Y-%m-%dT%H:%M:%S.%fZ")
-            except ValueError:
-                # Handle case where microseconds are not present
                 valid_until_dt = datetime.strptime(valid_until, "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError:
+                print(f"Invalid timestamp format: {valid_until}")
+                return
             
             # Ensure the datetime object has timezone information
             if not valid_until_dt.tzinfo:
