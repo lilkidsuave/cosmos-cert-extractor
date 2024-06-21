@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 
+import sys
+
+if sys.version_info < (3, 9):
+    print("This script requires Python 3.9 or later.")
+    sys.exit(1)
+
 from datetime import datetime, timezone
 import json
 import os
-import sys
 import time
 import zoneinfo
 from tzlocal import get_localzone
@@ -55,7 +60,10 @@ def check_certificate():
 
             # Print certificate expiration date with timezone
             local_tz = get_local_timezone()
-            valid_until_dt = datetime.strptime(valid_until, "%Y-%m-%dT%H:%M:%SZ")
+            try:
+                valid_until_dt = datetime.strptime(valid_until, "%Y-%m-%dT%H:%M:%S.%fZ")
+            except ValueError:
+                valid_until_dt = datetime.strptime(valid_until, "%Y-%m-%dT%H:%M:%SZ")
             valid_until_dt = valid_until_dt.replace(tzinfo=timezone.utc).astimezone(local_tz)
             print(f"Certificate valid until: {valid_until_dt.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
     else:
