@@ -10,14 +10,14 @@ from tzlocal import get_localzone
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-INPUT_PATH = "/input/cosmos.config.json"
+INPUT_PATH = "/input"
 CERTS_PATH = "/output/certs"
 
 curr_valid_until = None
 
 class ConfigFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if event.src_path == INPUT_PATH and os.path.getsize(event.src_path) > 0:
+        if event.src_path == INPUT_PATH + "/cosmos.config.json" and os.path.getsize(event.src_path) > 0:
             check_certificate()
 
 def get_local_timezone():
