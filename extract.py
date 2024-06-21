@@ -80,6 +80,7 @@ def main():
     if not os.path.isdir(CERTS_PATH):
         print("Certs output folder not found.")
         sys.exit()
+    check_certificate()
     observer = Observer()
     event_handler = ConfigFileHandler()
     observer.schedule(event_handler, INPUT_PATH, recursive=False)
