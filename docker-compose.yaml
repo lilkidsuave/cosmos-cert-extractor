@@ -2,9 +2,10 @@ version: '3.3'
 services:
   cert_checker:
     image: ghcr.io/lilkidsuave/cosmos-cert-extractor:latest
+    container_name: cosmos-cert-extractor
+    restart: always
     environment:
       - TZ=UTC
     volumes:
-      - /etc/localtime:/etc/localtime:ro
       - CosmosDirectory:/input
       - AdguardDirectory:/output/certs
