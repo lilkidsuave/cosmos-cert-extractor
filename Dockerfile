@@ -10,7 +10,7 @@ RUN apt-get update && \
 # Copy the script into the container
 COPY extract.py /extract.py 
 # Install any necessary dependencies
-RUN pip install pyOpenSSL watchdog pytz tzlocal
+RUN pip install watchdog tzlocal
 # Set default environment variable
 ENV TZ=America/New_York
 # Make sure the script is executable (if necessary)
