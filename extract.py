@@ -63,8 +63,13 @@ def check_certificate():
             try:
                 valid_until_dt = datetime.strptime(valid_until, "%Y-%m-%dT%H:%M:%S.%fZ")
             except ValueError:
+                # Handle case where microseconds are not present
                 valid_until_dt = datetime.strptime(valid_until, "%Y-%m-%dT%H:%M:%SZ")
-            valid_until_dt = valid_until_dt.replace(tzinfo=timezone.utc).astimezone(local_tz)
+            
+            # Ensure the datetime object has timezone information
+            if not valid_until_dt.tzinfo:
+                valid_until_dt = valid_until_dt.replace(tzinfo=timezone.utc).astimezone(local_tz)
+
             print(f"Certificate valid until: {valid_until_dt.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
     else:
         print("Cosmos config file not found.")
