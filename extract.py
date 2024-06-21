@@ -10,191 +10,88 @@ from OpenSSL import crypto
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import pytz
-import hashlib
 from tzlocal import get_localzone
 
-# Paths to configuration and certificate files
-CONFIG_PATH = '/input/cosmos.config.json'
-CERT_PATH = '/output/certs/cert.pem'
-KEY_PATH = '/output/certs/key.pem'
-DEFAULT_CHECK_INTERVAL = 0  # Default check interval is when it expires
+INPUT_PATH = "/input/cosmos.config.json"
+CERTS_PATH = "/output/certs"
 
-# Event to indicate interruption by signal
-interrupted = False
-lock = threading.Lock()
-current_config_hash = None
+curr_valid_until = None
 
-def compute_relevant_config_hash(config_path):
-    # Compute the SHA-256 hash of the relevant parts of the config file
-    hasher = hashlib.sha256()
-    try:
-        with open(config_path, 'r') as f:
-            config = json.load(f)
-            relevant_data = json.dumps({
-                'TLSCert': config['HTTPConfig']['TLSCert'],
-                'TLSKey': config['HTTPConfig']['TLSKey']
-            }, sort_keys=True).encode('utf-8')
-            hasher.update(relevant_data)
-    except (OSError, json.JSONDecodeError) as e:
-        print(f'Error computing hash for config file: {e}')
-        return None
-    return hasher.hexdigest()
-
-class ConfigChangeHandler(FileSystemEventHandler):
-    # Handler for file system events. Triggers certificate renewal on config file modification.
+class ConfigFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0:
-            hash_check()
-        
-def hash_check():
-    global current_config_hash
-    new_config_hash = compute_relevant_config_hash(CONFIG_PATH)
-    if new_config_hash and new_config_hash != current_config_hash:
-        print('Configuration file changed, renewing certificates.')
-        current_config_hash = new_config_hash
-        renew_certificates()
-        time.sleep(1)
-        # Check if the modified file is the config file
-        
-            
-    
+        if event.src_path == INPUT_PATH and os.path.getsize(event.src_path) > 0:
+            check_certificate()
+
 def get_local_timezone():
     # Get the system's local timezone from environment variable or tzlocal
-    tz_name = os.getenv('TZ', get_localzone() )
+    tz_name = os.getenv('TZ', get_localzone().zone)
     if tz_name:
         try:
             os.system(f'ln -fs /usr/share/zoneinfo/{tz_name} /etc/localtime && \
-    dpkg-reconfigure -f noninteractive tzdata && \
-    echo {tz_name} > /etc/timezone')
+dpkg-reconfigure -f noninteractive tzdata && \
+echo {tz_name} > /etc/timezone')
             with open('/etc/timezone', 'w') as f:
                 f.write(tz_name + '\n')
-                return pytz.timezone(tz_name)
+            return pytz.timezone(tz_name)
         except pytz.UnknownTimeZoneError:
             print(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
             return pytz.UTC
     else:
         return get_localzone()
 
-def load_config():
-    # Load the configuration from the specified config file.
-    try:
-        with open(CONFIG_PATH, 'r') as conf_file:
-            return json.load(conf_file)
-    except OSError as e:
-        print(f'Error reading config file: {e}')
-        return None
-
-def load_certificates():
-    # Load the current certificates from the specified files.
-    try:
-        with open(CERT_PATH, 'r') as cert_file:
-            cert_data = cert_file.read()
-        with open(KEY_PATH, 'r') as key_file:
-            key_data = key_file.read()
-        return cert_data, key_data
-    except OSError as e:
-        print(f'Error reading certificates: {e}')
-        return None, None
-
-def write_certificates(cert, key):
-    # Write the new certificates to the specified files.
-    try:
-        with open(CERT_PATH, 'w') as cert_file:
-            cert_file.write(cert)
-        with open(KEY_PATH, 'w') as key_file:
-            key_file.write(key)
-        print('Certificates written successfully.')
-    except OSError as e:
-        print(f'Error writing certificates: {e}')
-
-def renew_certificates():
-    # Renew the certificates by reading from the config file and writing to the certificate files.
-    global interrupted
-    cert_data, key_data = load_certificates()
-    print('Updating certificates...')
+def check_certificate():
+    global curr_valid_until
     config_object = load_config()
     if config_object:
-        cert = config_object['HTTPConfig']['TLSCert']
-        key = config_object['HTTPConfig']['TLSKey']
-        write_certificates(cert, key)
-        print('Certificates updated.')
+        cert = config_object["HTTPConfig"]["TLSCert"]
+        key = config_object["HTTPConfig"]["TLSKey"]
+        valid_until = config_object["HTTPConfig"]["TLSValidUntil"]
+        if valid_until != curr_valid_until:
+            write_certificates(cert, key)
+            curr_valid_until = valid_until
+
+            # Print certificate expiration date with timezone
+            local_tz = get_local_timezone()
+            valid_until_dt = datetime.strptime(valid_until, "%Y-%m-%dT%H:%M:%SZ")
+            valid_until_dt = valid_until_dt.replace(tzinfo=timezone.utc).astimezone(local_tz)
+            print(f"Certificate valid until: {valid_until_dt.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
     else:
-        print('Couldn\'t read the config file.')
+        print("Cosmos config file not found.")
+        sys.exit()
 
-def is_cert_expired(cert_data, tz):
-    # Check if the certificate has expired and convert the expiry date to the specified timezone.
-    cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_data)
-    expiry_date_str = cert.get_notAfter().decode('ascii')
-    expiry_date = datetime.strptime(expiry_date_str, '%Y%m%d%H%M%SZ').replace(tzinfo=timezone.utc)
-    expiry_date = expiry_date.astimezone(tz)  # Convert to specified timezone
-    return expiry_date < datetime.now(tz), expiry_date  # Return expiry status and expiry date
-
-def get_check_interval():
-    # Get the check interval from the environment variable or use the default.
+def load_config():
     try:
-        return int(os.getenv('CHECK_INTERVAL', DEFAULT_CHECK_INTERVAL))
-    except ValueError:
-        print(f'Invalid CHECK_INTERVAL value. Using default: {DEFAULT_CHECK_INTERVAL} seconds.')
-        return DEFAULT_CHECK_INTERVAL
+        with open(INPUT_PATH + "/cosmos.config.json", "r") as conf_file:
+            return json.load(conf_file)
+    except OSError:
+        return None
 
-def get_watchdog_status():
-    # Check if the watchdog is enabled based on the environment variable.
-    return os.getenv('WATCHDOG_ENABLED', 'false').lower() in ['true', '1', 'yes']
+def write_certificates(cert, key):
+    with open(CERTS_PATH + "/cert.pem", "w") as cert_file:
+        cert_file.write(cert)
+    
+    with open(CERTS_PATH + "/key.pem", "w") as key_file:
+        key_file.write(key)
 
-def signal_handler(sig, frame):
-    # Handle interrupt signal by setting the interrupted flag.
-    global interrupted
-    with lock:
-        interrupted = True
-    print('Received interrupt signal.')
-    renew_certificates()
-    interrupted = False
-    time.sleep(1)
+    print("Cert extracted successfully.")
 
 def main():
-    global current_config_hash
-    signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
-    check_interval = get_check_interval()
-    if check_interval > 0:
-        current_time = time.time()
-        next_check_time = time.time()
-        next_check_time = current_time + check_interval
-    tz = get_local_timezone()
-    renew_certificates()  # Initial renewal of certificates
-    watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
-    current_config_hash = compute_relevant_config_hash(CONFIG_PATH)  # Compute initial hash
-    cert_data, key_data = load_certificates()
-    expired, expiry_date = is_cert_expired(cert_data, tz)
-    print(f'New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
+    if not os.path.isdir(INPUT_PATH):
+        print("Config folder not found.")
+        sys.exit()
+    if not os.path.isdir(CERTS_PATH):
+        print("Certs output folder not found.")
+        sys.exit()
+    observer = Observer()
+    event_handler = ConfigFileHandler()
+    observer.schedule(event_handler, INPUT_PATH, recursive=False)
+    observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
 
-    if watchdog_enabled:
-        print('Watchdog enabled. Monitoring the configuration file for changes.')
-        event_handler = ConfigChangeHandler()
-        observer = Observer()
-        observer.schedule(event_handler, path=os.path.dirname(CONFIG_PATH), recursive=False)
-        observer.start()
-
-    while watchdog_enabled != 'false':
-        interrupted = False
-        if check_interval > 0:
-            current_time = time.time()
-        cert_data, key_data = load_certificates()
-        # Condition to renew certificates if expired or interrupted
-        expired, expiry_date = is_cert_expired(cert_data, tz)
-        if expired:
-            old_expiry_date = expiry_date
-            hash_check()
-            expired, expiry_date = is_cert_expired(cert_data, tz)
-            print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
-            if check_interval > 0:
-                print(f'Updating again in {check_interval} seconds.')
-                next_check_time = current_time + check_interval  # Update next_check_time
-        elif check_interval > 0 and current_time >= next_check_time:
-            hash_check()
-            print(f'Updating again in {check_interval} seconds.')
-            next_check_time = current_time + check_interval
-        # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
-        time.sleep(1)
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
