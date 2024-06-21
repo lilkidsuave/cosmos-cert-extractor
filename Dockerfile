@@ -1,6 +1,6 @@
 # Use an appropriate base image
 FROM python:3.12-slim
-ARG TZ=America/New_York
+ARG TZ=UTC
 RUN apt-get update && \
     apt-get install -y --no-install-recommends tzdata && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
@@ -12,7 +12,7 @@ COPY extract.py /extract.py
 # Install any necessary dependencies
 RUN pip install watchdog tzlocal
 # Set default environment variable
-ENV TZ=America/New_York
+ENV TZ=UTC
 # Make sure the script is executable (if necessary)
 RUN chmod +x /extract.py
 # Command to run the script
