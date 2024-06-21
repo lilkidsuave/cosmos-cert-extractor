@@ -2,11 +2,8 @@
 
 import json
 import os
-import signal
-import threading
 import time
 from datetime import datetime, timezone
-from OpenSSL import crypto
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import pytz
