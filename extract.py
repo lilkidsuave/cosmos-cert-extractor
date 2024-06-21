@@ -43,16 +43,21 @@ def compute_relevant_config_hash(config_path):
 class ConfigChangeHandler(FileSystemEventHandler):
     # Handler for file system events. Triggers certificate renewal on config file modification.
     def on_modified(self, event):
-        global current_config_hash
-        # Check if the modified file is the config file
         if event.src_path == CONFIG_PATH and os.path.getsize(event.src_path) > 0:
-            new_config_hash = compute_relevant_config_hash(CONFIG_PATH)
-            if new_config_hash and new_config_hash != current_config_hash:
-                print('Configuration file changed, renewing certificates.')
-                current_config_hash = new_config_hash
-                renew_certificates()
-                time.sleep(1)
-
+            hash_check()
+        
+def hash_check():
+    global current_config_hash
+    new_config_hash = compute_relevant_config_hash(CONFIG_PATH)
+    if new_config_hash and new_config_hash != current_config_hash:
+        print('Configuration file changed, renewing certificates.')
+        current_config_hash = new_config_hash
+        renew_certificates()
+        time.sleep(1)
+        # Check if the modified file is the config file
+        
+            
+    
 def get_local_timezone():
     # Get the system's local timezone from environment variable or tzlocal
     tz_name = os.getenv('TZ', get_localzone() )
@@ -149,10 +154,11 @@ def signal_handler(sig, frame):
 def main():
     global current_config_hash
     signal.signal(signal.SIGINT, signal_handler)  # Register SIGINT handler
-    next_check_time = time.time()
-    current_time = time.time()
     check_interval = get_check_interval()
-    next_check_time = current_time + check_interval
+    if check_interval > 0:
+        current_time = time.time()
+        next_check_time = time.time()
+        next_check_time = current_time + check_interval
     tz = get_local_timezone()
     renew_certificates()  # Initial renewal of certificates
     watchdog_enabled = get_watchdog_status()  # Check if watchdog is enabled
@@ -170,28 +176,24 @@ def main():
 
     while watchdog_enabled != 'false':
         interrupted = False
-        check_interval = get_check_interval()  # Get the check interval
-        current_time = time.time()
+        if check_interval > 0:
+            current_time = time.time()
         cert_data, key_data = load_certificates()
         # Condition to renew certificates if expired or interrupted
         expired, expiry_date = is_cert_expired(cert_data, tz)
-        if expired and check_interval > 0:
+        if expired:
             old_expiry_date = expiry_date
-            renew_certificates()
+            hash_check()
             expired, expiry_date = is_cert_expired(cert_data, tz)
-            print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. Updating again in {check_interval} seconds.')
-            next_check_time = current_time + check_interval  # Update next_check_time
+            print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
+            if check_interval > 0:
+                print(f'Updating again in {check_interval} seconds.')
+                next_check_time = current_time + check_interval  # Update next_check_time
         elif check_interval > 0 and current_time >= next_check_time:
-            renew_certificates()
+            hash_check()
             print(f'Updating again in {check_interval} seconds.')
             next_check_time = current_time + check_interval
         # Handle the case when CHECK_INTERVAL is 0 and certificate expired or interrupted
-        elif check_interval == 0 and expired:
-            old_expiry_date = expiry_date
-            renew_certificates()
-            expired, expiry_date = is_cert_expired(cert_data, tz)
-            print(f'Certificate expired on: {old_expiry_date.isoformat()} {old_expiry_date.tzinfo}. New certificate expires on {expiry_date.isoformat()} {expiry_date.tzinfo}.')
-
         time.sleep(1)
 
 if __name__ == '__main__':
