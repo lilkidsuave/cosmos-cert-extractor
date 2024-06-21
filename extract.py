@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
+from datetime import datetime, timezone
 import json
 import os
-import time
-from datetime import datetime, timezone
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 import pytz
+import sys
+import time
 from tzlocal import get_localzone
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 INPUT_PATH = "/input/cosmos.config.json"
 CERTS_PATH = "/output/certs"
