@@ -14,5 +14,7 @@ RUN pip install watchdog tzlocal
 # Set default environment variable
 ENV TZ=UTC
 # Command to run the script
+LABEL org.opencontainers.image.description First release on new base
+Thanks to @waschinski for the help.
 CMD ["python", "extract.py", "--restart", "unless-stopped"]
 
