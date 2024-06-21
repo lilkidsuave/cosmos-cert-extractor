@@ -13,7 +13,6 @@ COPY extract.py /extract.py
 RUN pip install watchdog tzlocal
 # Set default environment variable
 ENV TZ=UTC
-# Make sure the script is executable (if necessary)
-RUN chmod +x /extract.py
 # Command to run the script
-ENTRYPOINT ["./extract.py"]
+CMD ["python", "extract.py", "--restart", "unless-stopped"]
+
