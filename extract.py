@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-
-if sys.version_info < (3, 9):
-    print("This script requires Python 3.9 or later.")
-    sys.exit(1)
-
 from datetime import datetime, timezone
 import json
 import os
