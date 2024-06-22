@@ -62,6 +62,6 @@ def main():
             time.sleep(0.001)
     except KeyboardInterrupt:
         observer.stop()
-        observer.join()
+    observer.join()
 if __name__ == "__main__":
     main()
