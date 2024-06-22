@@ -17,7 +17,7 @@ class ConfigFileHandler(FileSystemEventHandler):
 
 def load_config():
     try:
-        with open(CONFIG_FILE) as f:
+        with open(CONFIG_FILE, "r") as f:
             return json.load(f)
     except Exception as e:
         print(f"Error loading config file: {e}")
