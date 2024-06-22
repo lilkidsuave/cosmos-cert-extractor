@@ -46,7 +46,7 @@ def check_certificate():
     try:
         valid_until_dt = datetime.strptime(valid_until.split('.')[0] + 'Z', "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).astimezone(get_localzone())
         print(f"Current time: {datetime.now(get_localzone()).strftime('%a %b %d %H:%M:%S %Z %Y')}")
-        print(f"Valid until: {valid_until_dt.strftime('%a %b %d %H:%M:%S %Z %Y')}")
+        print(f"Certificate valid until: {valid_until_dt.strftime('%a %b %d %H:%M:%S %Z %Y')}")
     except ValueError as e:
         print(f"Error processing timestamp: {e}")
 
