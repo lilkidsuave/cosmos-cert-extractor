@@ -12,7 +12,7 @@ curr_valid_until = None
 
 class ConfigFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if event.src_path == CONFIG_FILE and os.path.isfile(CONFIG_FILE):
+        if event.src_path == CONFIG_FILE and os.path.getsize(event.src_path) > 0::
             check_certificate()
 
 def load_config():
