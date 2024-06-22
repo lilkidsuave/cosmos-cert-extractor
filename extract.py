@@ -26,16 +26,14 @@ class ConfigFileHandler(FileSystemEventHandler):
             check_certificate()
 
 def get_local_timezone():
-    # Get the system's local timezone from environment variable or tzlocal
     local_zone = get_localzone()
     tz_name = os.getenv('TZ', None)
+    
     if tz_name:
         try:
             tz = zoneinfo.ZoneInfo(tz_name)
-            os.system(f'cp /usr/share/zoneinfo${tz_name} /etc/localtime && \
-    echo ${tz_name} > /etc/timezone && date')
-            with open('/etc/timezone', 'w') as f:
-                f.write(tz_name + '\n')
+            os.system(f'cp /usr/share/zoneinfo/{tz_name} /etc/localtime && '
+                      f'echo "{tz_name}" > /etc/timezone && date')
             return tz
         except zoneinfo.ZoneInfoNotFoundError:
             print(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
