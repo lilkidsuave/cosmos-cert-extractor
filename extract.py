@@ -66,7 +66,10 @@ def check_certificate():
             except ValueError:
                 print(f"Invalid timestamp format: {valid_until}")
                 return
-            
+                
+            current_datetime = datetime.now()
+            formatted_datetime = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
+            print(f"Current date and time: {formatted_datetime}")
             # Ensure the datetime object has timezone information
             if not valid_until_dt.tzinfo:
                 valid_until_dt = valid_until_dt.replace(tzinfo=timezone.utc).astimezone(local_tz)
