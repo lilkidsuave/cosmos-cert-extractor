@@ -33,7 +33,7 @@ def get_local_timezone():
         try:
             tz = zoneinfo.ZoneInfo(tz_name)
             os.system(f'cp /usr/share/zoneinfo/{tz_name} /etc/localtime && '
-                      f'echo "{tz_name}" > /etc/timezone && date')
+                      f'echo "{tz_name}" > /etc/timezone')
             return tz
         except zoneinfo.ZoneInfoNotFoundError:
             print(f'Invalid timezone specified: {tz_name}. Using UTC instead.')
@@ -68,7 +68,7 @@ def check_certificate():
                 return
                 
             current_datetime = datetime.now()
-            formatted_datetime = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
+            formatted_datetime = current_datetime.strftime('%a %b %d %H:%M:%S %Z %Y')
             print(f"Current date and time: {formatted_datetime}")
             # Ensure the datetime object has timezone information
             if not valid_until_dt.tzinfo:
