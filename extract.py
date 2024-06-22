@@ -6,7 +6,7 @@ from tzlocal import get_localzone
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 INPUT_PATH = "/input"
-CONFIG_FILE = f"{INPUT_PATH}/cosmos.config.json"
+CONFIG_FILE = INPUT_PATH + "/cosmos.config.json"
 CERTS_PATH = "/output/certs"
 curr_valid_until = None
 
