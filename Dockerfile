@@ -1,5 +1,5 @@
 # Use an appropriate base image
-FROM python:3.12.4-slim
+FROM python:3.12.4-alpine
 
 # Set the timezone argument with a default value
 ARG TZ=UTC
@@ -8,15 +8,14 @@ ARG TZ=UTC
 ENV TZ=${TZ}
 
 # Install necessary system dependencies and clean up in one layer
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends tzdata && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/${TZ} /etc/localtime && \
+    echo ${TZ} > /etc/timezone
 
 # Copy the script into the container
 COPY extract.py /extract.py
 
-# Install Python dependencies
+# Install Python dependencies with a pinned version
 RUN pip install --no-cache-dir watchdog tzlocal
 
 # Add metadata to the image
