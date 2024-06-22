@@ -71,7 +71,9 @@ def check_certificate():
             if not valid_until_dt.tzinfo:
                 valid_until_dt = valid_until_dt.replace(tzinfo=timezone.utc).astimezone(local_tz)
 
-            print(f"Certificate valid until: {valid_until_dt.strftime('%Y-%m-%d %H:%M:%S %Z%z')}")
+            # Format the datetime object as required
+            formatted_valid_until = valid_until_dt.strftime('%a %b %d %H:%M:%S %Z %Y')
+            print(f"Certificate valid until: {formatted_valid_until}")
     else:
         print("Cosmos config file not found.")
         sys.exit()
