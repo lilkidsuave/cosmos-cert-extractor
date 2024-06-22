@@ -32,8 +32,8 @@ def get_local_timezone():
     if tz_name:
         try:
             tz = zoneinfo.ZoneInfo(tz_name)
-            os.system(f'cp /usr/share/zoneinfo/${tz_name} /etc/localtime && \
-    echo ${tz_name} > /etc/timezone && \ date')
+            os.system(f'cp /usr/share/zoneinfo${tz_name} /etc/localtime && \
+    echo ${tz_name} > /etc/timezone && date')
             with open('/etc/timezone', 'w') as f:
                 f.write(tz_name + '\n')
             return tz
