@@ -6,7 +6,7 @@ from tzlocal import get_localzone
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 INPUT_PATH = "/input"
-CONFIG_FILE = INPUT_PATH + "/cosmos.config.json"
+CONFIG_FILE = f"{INPUT_PATH}/cosmos.config.json"
 CERTS_PATH = "/output/certs"
 curr_valid_until = None
 
@@ -55,7 +55,8 @@ def main():
         sys.exit("Required folder(s) not found.")
     check_certificate()
     observer = Observer()
-    observer.schedule(ConfigFileHandler(), INPUT_PATH, recursive=False)
+    event_handler = ConfigFileHandler()
+    observer.schedule(event_handler, INPUT_PATH, recursive=False)
     observer.start()
     try:
         while True:
