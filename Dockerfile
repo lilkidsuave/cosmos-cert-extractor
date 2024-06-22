@@ -5,10 +5,9 @@ ARG TZ=UTC
 # Set default environment variable
 ENV TZ=${TZ}
 # Install necessary system dependencies and clean up in one layer
-RUN apk add --no-cache tzdata py3-watchdog \
+RUN apk add --no-cache tzdata py3-watchdog py3-tzlocal inotify-tools \
     && cp /usr/share/zoneinfo/${TZ} /etc/localtime \
-    && echo ${TZ} > /etc/timezone \
-    && pip install --no-cache-dir tzlocal==5.2
+    && echo ${TZ} > /etc/timezone
 # Copy the script into the container
 COPY extract.py /extract.py
 # Add metadata to the image
