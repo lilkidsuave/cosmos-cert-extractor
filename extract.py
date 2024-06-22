@@ -59,7 +59,7 @@ def main():
     observer.start()
     try:
         while True:
-            time.sleep(0.001)
+            time.sleep(0.01)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
