@@ -1,7 +1,7 @@
 #!/bin/bash
-CONFIG_FILE="/input/cosmos.config.json"
-TLS_CERT_FILE="/output/certs/cert.pem"
-TLS_KEY_FILE="/output/certs/key.pem"
+CONFIG_FILE="/var/lib/cosmos/cosmos.config.json"
+TLS_CERT_FILE="./tls_cert.pem"
+TLS_KEY_FILE="./tls_key.pem"
 CURRENT_VALID_UNTIL=""
 # Function to update TLS certificates
 function update_certificates {
@@ -20,7 +20,9 @@ function print_current_time {
 }
 # Function to print certificate expiry date
 function print_certificate_expiry {
-    local expiry_date=$(date -d "$(get_tls_valid_until)" +"%a %b %d %H:%M:%S %Z %Y" 2>/dev/null)
+    local raw_date=$(get_tls_valid_until)
+    local trimmed_date=${raw_date%.*}Z  # Trim the fractional seconds
+    local expiry_date=$(date -d "$trimmed_date" +"%a %b %d %H:%M:%S %Z %Y" 2>/dev/null)
     echo "Certificate valid until: $expiry_date"
 }
 # Initial certificate setup
