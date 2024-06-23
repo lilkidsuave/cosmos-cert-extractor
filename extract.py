@@ -38,9 +38,7 @@ def check_certificate():
     if not config:
         sys.exit("Config file not found or invalid.")
     http_config = config.get("HTTPConfig", {})
-    cert = http_config.get("TLSCert")
-    key = http_config.get("TLSKey")
-    valid_until = http_config.get("TLSValidUntil")
+    cert, key, valid_until = http_config.get("TLSCert"), http_config.get("TLSKey"), http_config.get("TLSValidUntil")
     if valid_until == curr_valid_until:
         return
     write_certificates(cert, key)
