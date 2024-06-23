@@ -1,5 +1,5 @@
 # Use an appropriate base image and pin a specific version of Alpine
-FROM python:3.12.4-alpine3.20
+FROM python:3.12-alpine
 # Set the timezone argument with a default value
 ARG TZ=UTC
 # Set default environment variable
