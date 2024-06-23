@@ -24,7 +24,7 @@ function print_certificate_expiry {
     local trimmed_date=$(echo "$raw_date" | sed 's/\.[0-9]*Z/Z/')  # Trim the fractional seconds
     local expiry_date=$(date -d "$trimmed_date" +"%a %b %d %H:%M:%S %Z %Y" 2>/dev/null)
     if [ $? -eq 0 ]; then
-        echo "Certificate valid until: $expiry_date"
+        echo "Certificate valid until: $trimmed_date"
     else
         echo "Error: Invalid date format for certificate expiry."
     fi
