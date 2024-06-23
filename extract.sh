@@ -19,10 +19,13 @@ function print_current_time {
     date +"%a %b %d %H:%M:%S %Z %Y"
 }
 # Function to print certificate expiry date
+# Function to print certificate expiry date
 function print_certificate_expiry {
     local raw_date=$(get_tls_valid_until)
-    local trimmed_date=$(echo "$raw_date" | sed 's/\.[0-9]*Z/Z/')  # Trim the fractional seconds
-    local expiry_date=$(date -u -d "$trimmed_date" +"%a %b %d %H:%M:%S %Z %Y" 2>/dev/null)
+    # Trim the 'Z' and 'T' from the date string and reorganize
+    local trimmed_date=$(echo "$raw_date" | sed 's/\.[0-9]*Z//' | sed 's/T/ /')
+    # Convert and format the date
+    local expiry_date=$(date -d "$trimmed_date" +"%a %b %d %H:%M:%S %Z %Y" 2>/dev/null)
     if [ $? -eq 0 ]; then
         echo "Certificate valid until: $expiry_date"
     else
