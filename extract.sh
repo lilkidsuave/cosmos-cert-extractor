@@ -1,7 +1,7 @@
 #!/bin/bash
-CONFIG_FILE="/input/cosmos.config.json"
-TLS_CERT_FILE="/output/certs/cert.pem"
-TLS_KEY_FILE="/output/certs/key.pem"
+CONFIG_FILE="/var/lib/cosmos/cosmos.config.json"
+TLS_CERT_FILE="./tls_cert.pem"
+TLS_KEY_FILE="./tls_key.pem"
 CURRENT_VALID_UNTIL=""
 # Function to update TLS certificates
 function update_certificates {
@@ -14,9 +14,21 @@ function update_certificates {
 function get_tls_valid_until {
     jq -r '.HTTPConfig.TLSValidUntil' "$CONFIG_FILE"
 }
+# Function to print current time in Alpine Linux format
+function print_current_time {
+    date +"%a %b %d %H:%M:%S %Z %Y"
+}
+# Function to print certificate expiry date
+function print_certificate_expiry {
+    local expiry_date=$(date -d "$(get_tls_valid_until)" +"%a %b %d %H:%M:%S %Z %Y" 2>/dev/null)
+    echo "Certificate valid until: $expiry_date"
+}
 # Initial certificate setup
 update_certificates
 CURRENT_VALID_UNTIL=$(get_tls_valid_until)
+# Print initial current time and certificate expiry date
+echo "Current time: $(print_current_time)"
+print_certificate_expiry
 # Monitor changes to config file
 while true; do
     if inotifywait -q -e modify "$CONFIG_FILE"; then
@@ -24,6 +36,8 @@ while true; do
         if [ "$NEW_VALID_UNTIL" != "$CURRENT_VALID_UNTIL" ]; then
             CURRENT_VALID_UNTIL="$NEW_VALID_UNTIL"
             update_certificates
+            echo "Current time: $(print_current_time)"
+            print_certificate_expiry
         fi
     fi
 done
