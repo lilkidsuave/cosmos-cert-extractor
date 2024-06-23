@@ -1,7 +1,7 @@
 #!/bin/bash
-CONFIG_FILE="/var/lib/cosmos/cosmos.config.json"
-TLS_CERT_FILE="./tls_cert.pem"
-TLS_KEY_FILE="./tls_key.pem"
+CONFIG_FILE="/input/cosmos.config.json"
+TLS_CERT_FILE="/output/certs/cert.pem"
+TLS_KEY_FILE="/output/certs/key.pem"
 CURRENT_VALID_UNTIL=""
 # Function to update TLS certificates
 function update_certificates {
