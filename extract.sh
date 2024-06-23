@@ -6,9 +6,9 @@ CURRENT_VALID_UNTIL=""
 # Function to update TLS certificates
 function update_certificates {
     jq -r '.HTTPConfig.TLSCert' "$CONFIG_FILE" > "$TLS_CERT_FILE"
+    echo "TLSCert extracted to $TLS_CERT_FILE"
     jq -r '.HTTPConfig.TLSKey' "$CONFIG_FILE" > "$TLS_KEY_FILE"
-    echo "TLSCert has been updated in $TLS_CERT_FILE"
-    echo "TLSKey has been updated in $TLS_KEY_FILE"
+    echo "TLSKey extracted to $TLS_KEY_FILE"
 }
 # Function to get TLSValidUntil from config
 function get_tls_valid_until {
@@ -18,7 +18,6 @@ function get_tls_valid_until {
 function print_current_time {
     date +"%a %b %d %H:%M:%S %Z %Y"
 }
-# Function to print certificate expiry date
 # Function to print certificate expiry date
 function print_certificate_expiry {
     local raw_date=$(get_tls_valid_until)
