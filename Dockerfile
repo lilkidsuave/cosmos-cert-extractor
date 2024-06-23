@@ -8,7 +8,7 @@ ENV TZ=${TZ}
 RUN apk add --no-cache tzdata \
     && cp /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone \
-    && pip install --no-cache-dir watchdog==4.0.1 tzlocal==5.2
+    && pip install --no-cache-dir pyinotify==0.9.6 tzlocal==5.2
 # Copy the script into the container
 COPY extract.py /extract.py
 # Add metadata to the image
