@@ -21,9 +21,13 @@ function print_current_time {
 # Function to print certificate expiry date
 function print_certificate_expiry {
     local raw_date=$(get_tls_valid_until)
-    local trimmed_date=${raw_date%.*}Z  # Trim the fractional seconds
+    local trimmed_date=$(echo "$raw_date" | sed 's/\.[0-9]*Z/Z/')  # Trim the fractional seconds
     local expiry_date=$(date -d "$trimmed_date" +"%a %b %d %H:%M:%S %Z %Y" 2>/dev/null)
-    echo "Certificate valid until: $expiry_date"
+    if [ $? -eq 0 ]; then
+        echo "Certificate valid until: $expiry_date"
+    else
+        echo "Error: Invalid date format for certificate expiry."
+    fi
 }
 # Initial certificate setup
 update_certificates
