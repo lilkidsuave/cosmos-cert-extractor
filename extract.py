@@ -6,19 +6,17 @@ from tzlocal import get_localzone
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 INPUT_PATH = "/input"
-CONFIG_FILE = f"{INPUT_PATH}/cosmos.config.json"
 CERTS_PATH = "/output/certs"
 curr_valid_until = None
-
 class ConfigFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if event.src_path == CONFIG_FILE and os.path.isfile(CONFIG_FILE):
+        if event.src_path == INPUT_PATH + "/cosmos.config.json" and os.path.getsize(event.src_path) > 0:
             check_certificate()
 
 def load_config():
     try:
-        with open(CONFIG_FILE) as f:
-            return json.load(f)
+        with open(INPUT_PATH + "/cosmos.config.json", "r") as conf_file:
+            return json.load(conf_file)
     except Exception as e:
         print(f"Error loading config file: {e}")
         return None
