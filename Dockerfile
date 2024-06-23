@@ -8,8 +8,8 @@ ENV TZ=${TZ}
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         tzdata && \
-    cp /usr/share/zoneinfo/${TZ} /etc/localtime && \
-    echo ${TZ} > /etc/timezone && \
+    ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 # Install Python packages with specific versions
