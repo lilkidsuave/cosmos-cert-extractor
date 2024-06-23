@@ -1,10 +1,8 @@
 #!/bin/bash
-
 CONFIG_FILE="/input/cosmos.config.json"
 TLS_CERT_FILE="/output/certs/cert.pem"
 TLS_KEY_FILE="/output/certs/key.pem"
 CURRENT_VALID_UNTIL=""
-
 # Function to update TLS certificates
 function update_certificates {
     jq -r '.HTTPConfig.TLSCert' "$CONFIG_FILE" > "$TLS_CERT_FILE"
@@ -12,7 +10,6 @@ function update_certificates {
     echo "TLSCert has been updated in $TLS_CERT_FILE"
     echo "TLSKey has been updated in $TLS_KEY_FILE"
 }
-
 # Function to get TLSValidUntil from config
 function get_tls_valid_until {
     jq -r '.HTTPConfig.TLSValidUntil' "$CONFIG_FILE"
