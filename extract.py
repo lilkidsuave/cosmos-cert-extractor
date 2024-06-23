@@ -52,12 +52,12 @@ def main():
     if not all(os.path.isdir(path) for path in (INPUT_PATH, CERTS_PATH)):
         sys.exit("Required folder(s) not found.")
     check_certificate()
-    observer = Observer()
+    observer = Observer(timeout=0.1)
     observer.schedule(ConfigFileHandler(), INPUT_PATH, recursive=False)
     observer.start()
     try:
         while True:
-            time.sleep(1)
+            observer.join(timeout=1)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
