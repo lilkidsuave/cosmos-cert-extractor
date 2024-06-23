@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
+
 import sys, json, os, time
 from datetime import datetime, timezone
 from tzlocal import get_localzone
-import pyinotify
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 INPUT_PATH = "/input"
 CONFIG_FILE = f"{INPUT_PATH}/cosmos.config.json"
 CERTS_PATH = "/output/certs"
 curr_valid_until = None
 
-class ConfigFileHandler(pyinotify.ProcessEvent):
-    def process_IN_MODIFY(self, event):
-        if event.pathname == CONFIG_FILE and os.path.isfile(CONFIG_FILE):
+class ConfigFileHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if event.src_path == CONFIG_FILE and os.path.isfile(CONFIG_FILE):
             check_certificate()
 
 def load_config():
@@ -54,14 +56,14 @@ def main():
     if not all(os.path.isdir(path) for path in (INPUT_PATH, CERTS_PATH)):
         sys.exit("Required folder(s) not found.")
     check_certificate()
-    wm = pyinotify.WatchManager()
-    handler = ConfigFileHandler()
-    notifier = pyinotify.Notifier(wm, handler)
-    wm.add_watch(INPUT_PATH, pyinotify.IN_MODIFY)
+    observer = Observer()
+    observer.schedule(ConfigFileHandler(), INPUT_PATH, recursive=False)
+    observer.start()
     try:
-        notifier.loop()
+        while True:
+            time.sleep(1)
     except KeyboardInterrupt:
-        notifier.stop()
-        sys.exit(0)
+        observer.stop()
+    observer.join()
 if __name__ == "__main__":
     main()
