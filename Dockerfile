@@ -13,4 +13,4 @@ COPY extract.sh /extract.sh
 # Add metadata to the image
 LABEL org.opencontainers.image.description="First release on new base. Thanks to @waschinski for the help."
 # Command to run the script
-ENTRYPOINT ["python", "/extract.sh"]
+ENTRYPOINT ["sh", "/extract.sh"]
