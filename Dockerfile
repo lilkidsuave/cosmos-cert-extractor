@@ -5,7 +5,7 @@ ARG TZ=UTC
 # Set default environment variable
 ENV TZ=${TZ}
 # Install necessary system dependencies and clean up in one layer
-RUN apk add --no-cache tzdata \
+RUN apk add --no-cache tzdata inotify-tools \
     && cp /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone
 # Copy the script into the container
