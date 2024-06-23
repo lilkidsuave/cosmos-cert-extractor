@@ -1,7 +1,7 @@
 # cosmos-cert-extractor
 This is a python script monitoring your [Cosmos](https://github.com/azukaar/Cosmos-Server) config file for changes in order to extract the TLS certificate from it. My personal use case is to re-use the certificate in my Adguard Home instance.
 ## How to use
-This branch uses python3.12-slim which is Debian Slim with Python.
+This branch uses python:3.12-slim which is Debian Slim with Python.
 Make sure your volume mounts are set up correctly:
 * The `cosmos` volume or path must be mapped to `/input`.
 * The `adguard-config` volume must be mapped to `/output/certs`.
